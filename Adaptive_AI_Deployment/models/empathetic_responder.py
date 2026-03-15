@@ -147,7 +147,7 @@ class EmpathicResponder:
         lonely_keywords = ["lonely", "alone", "isolated", "nobody", "no one"]
         is_lonely = any(keyword in user_text.lower() for keyword in lonely_keywords)
         
-        if is_lonely or emotion in ["sad", "negative"]:
+        if is_lonely or emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
                 "Hey, I hear you. 💙 It sounds like you're going through a tough time right now.",
                 "I'm really glad you shared that with me. 🤗 What you're feeling is completely valid.",
@@ -179,7 +179,7 @@ class EmpathicResponder:
     def _get_empathy_statement(self, emotion):
         """Empathetic statement that validates feelings"""
         
-        if emotion in ["sad", "negative"]:
+        if emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
                 "Feeling down is part of being human, and it's okay to not be okay sometimes. You're not alone in this—I'm right here with you.",
                 "Sadness can feel overwhelming, but remember: this feeling is temporary, and you have the strength to move through it.",
@@ -214,7 +214,7 @@ class EmpathicResponder:
     def _get_support_message(self, emotion):
         """Supportive message with light humor or encouragement"""
         
-        if emotion in ["sad", "negative"]:
+        if emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
                 "It takes strength to face these feelings, and I admire that you're doing it. 💙 Let's take this one moment at a time. Is there something small we can do to make you feel a little more comfortable right now?",
                 "Please be gentle with yourself today. You're navigating something difficult, and it's okay to rest and recharge. I'm here to support you in whatever way you need.",
@@ -248,7 +248,7 @@ class EmpathicResponder:
     
     def _get_recommendation_nudge(self, emotion):
         """Simple nudge pointing to the recommendations panel"""
-        if emotion in ["sad", "negative", "lonely", "isolated"]:
+        if emotion in ["sad", "negative", "lonely", "isolated", "crisis", "worthless"]:
             return random.choice([
                 "I've popped some ideas for things that might help on the side. 👉",
                 "Check out the suggestions I've prepared for you.",
@@ -272,7 +272,7 @@ class EmpathicResponder:
     def _get_follow_up_suggestions(self, emotion):
         """Generate conversation starters for continued engagement"""
         
-        if emotion in ["sad", "negative"] or "lonely" in emotion:
+        if emotion in ["sad", "negative", "crisis", "worthless"] or "lonely" in emotion:
             return [
                 "Tell me about a time when you felt truly happy",
                 "What's one thing you're grateful for today?",
@@ -357,7 +357,7 @@ class EmpathicResponder:
             current_emotion = current_emotion.lower()
             
             # Scenario 1: Improvement (Bad -> Good)
-            negative_emotions = ["sad", "lonely", "depressed", "angry", "anxious", "stressed", "fear", "negative"]
+            negative_emotions = ["sad", "lonely", "depressed", "angry", "anxious", "stressed", "fear", "negative", "crisis", "worthless"]
             positive_emotions = ["happy", "positive", "joy", "excited", "grateful"]
             
             if past_emotion in negative_emotions and current_emotion in positive_emotions:

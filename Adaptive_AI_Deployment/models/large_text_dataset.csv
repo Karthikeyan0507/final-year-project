@@ -1,0 +1,407 @@
+text,emotion
+I am feeling very anxious about my bank account.,Anxious
+Stay focused on the goal.,Neutral
+Friend,Happy
+One step at a time.,Neutral
+Emergency bills I cannot pay.,Crisis
+Neutral sentence example,Neutral
+Server is running on port 8080,Neutral
+Keep calm and carry on,Neutral
+I feel very thankful and blessed.,Grateful
+I'm going to snap soon.,Angry
+Friends have abandoned me during hard times.,Lonely
+I feel worthless and invisible.,Worthless
+Investment,Stressed
+I am just a waste of space.,Worthless
+I don't know how I will survive this month.,Crisis
+I keep overthinking every little detail.,Anxious
+Unemployment is really hitting me hard.,Stressed
+A standard sentence for verification.,Neutral
+Mean,Angry
+I can't stop worrying about what might happen.,Anxious
+The future feels scary.,Anxious
+I appreciate the small things in life.,Grateful
+Loan,Stressed
+Inbox is empty,Neutral
+I feel like a ghost.,Lonely
+I have no money for living expenses.,Crisis
+Lose,Sad
+I am broken beyond repair.,Sad
+Live,Happy
+I feel so much resentment.,Angry
+Nothing much is happening.,Neutral
+Distance from others makes me feel so small.,Lonely
+Pull request approved,Neutral
+The life goes on,Neutral
+A very neutral statement indeed,Neutral
+"Okay, I understand.",Neutral
+Failed,Worthless
+I'm running on fumes and completely exhausted.,Stressed
+There is a lamp on the table,Neutral
+One moment please.,Neutral
+The weather forecast says it might rain.,Neutral
+Export to PDF,Neutral
+This completely pisses me off.,Angry
+Ugly,Sad
+Like,Happy
+Poor,Sad
+I am learning and growing.,Neutral
+I'm stressed and burned out.,Stressed
+I have people who care about me.,Grateful
+"My heart is racing, I feel panicked.",Anxious
+Nothing out of the ordinary,Neutral
+I am just here.,Neutral
+Death,Sad
+Sitting on a chair,Neutral
+More or less,Neutral
+I have some emails to answer.,Neutral
+"Maybe yes, maybe no",Neutral
+Sad,Sad
+Scaling the microservices,Neutral
+I have no support system.,Lonely
+Enraged by the injustice I see.,Angry
+I feel so drained after work.,Stressed
+Everyone would be better off without me.,Worthless
+Okay,Neutral
+Bad,Sad
+I'll never achieve anything of value.,Worthless
+I am homeless and have no support.,Crisis
+Fear,Crisis
+The sun rises in the east.,Neutral
+Working,Happy
+Stabilizing the weights,Neutral
+Winning,Happy
+Sometimes I feel completely invisible.,Lonely
+Sort by relevance,Neutral
+Great,Happy
+One day at a time,Neutral
+I am heartbroken and grieving.,Sad
+I am feeling very positive and cheerful.,Happy
+I have money problems and it's heavily stressing me.,Stressed
+Lacking,Stressed
+My name is John.,Neutral
+I am going to the store.,Neutral
+No,Neutral
+"Watch out, I'm in a terrible mood.",Angry
+I am here to help.,Neutral
+I'm tired but not stressed,Neutral
+Tasks to complete,Neutral
+Love,Happy
+I'm constantly thinking about how to make ends meet.,Stressed
+I feel tight in my chest.,Anxious
+I wish I had someone to share my day with.,Lonely
+Just a regular day,Neutral
+In spite of,Neutral
+It's hard to get out of bed.,Sad
+I feel wonderful and optimistic!,Happy
+I just want to cry all day.,Sad
+Weekends are for rest,Neutral
+I am physically alone and very lonely.,Lonely
+Busy,Stressed
+Calculating the best approach.,Neutral
+Social events make me feel more isolated.,Lonely
+Taxes,Stressed
+I'm just passing time,Neutral
+I feel uneasy and on edge constantly.,Anxious
+Financial insecurity is keeping me up at night.,Anxious
+I feel disconnected from everyone.,Lonely
+Yes,Neutral
+Silence is golden.,Neutral
+Just more placeholder data for neutrality,Neutral
+Everyone moved on without me.,Lonely
+I am choosing to be positive.,Happy
+Default settings applied.,Neutral
+Missing,Sad
+I have no one to talk to.,Lonely
+I'm constantly checking if I made a mistake.,Anxious
+The economic situation is terrifying.,Anxious
+I am livid and bitter.,Angry
+The uncertainty is driving my anxiety higher.,Anxious
+I have a phone in my pocket.,Neutral
+The light is dim,Neutral
+Win,Happy
+I feel so lonely and isolated.,Lonely
+Storage is 90% full,Neutral
+I feel so sad and depressed.,Sad
+Loneliness is taking over.,Lonely
+I have a plan to hurt myself.,Crisis
+I am extremely fortunate.,Grateful
+I feel uncertain about what's coming.,Anxious
+I feel like I'm about to have a panic attack.,Anxious
+I can't stop thinking about tomorrow's problems.,Anxious
+I'm so angry at the world's unfairness.,Angry
+Bank balance is low and I am worried.,Stressed
+I feel okay,Neutral
+No,Neutral
+I'm so lucky to have such wonderful people around.,Grateful
+Social situations make my palms sweat and heart race.,Anxious
+Danger,Crisis
+I have had enough and I'm losing my temper.,Angry
+I am looking at the window,Neutral
+I have a voice.,Neutral
+Free,Happy
+I am grateful for my health.,Grateful
+Beautiful,Happy
+Drinking a glass of water,Neutral
+A neutral tone is best here,Neutral
+I feel so down.,Sad
+I am waiting for a coffee.,Neutral
+I am going to kill myself.,Crisis
+I have no money for food today.,Crisis
+Need to find a better paying job.,Stressed
+Growth,Happy
+I am furious and losing my temper.,Angry
+I'm tired of being treated second-rate.,Angry
+Database connection established,Neutral
+i am helpless right now . i gonna endup my life soon,Crisis
+Friday finally here,Neutral
+Broken,Sad
+I'm grateful for everything.,Grateful
+The pressure of debt is crushing.,Stressed
+"Same old, same old",Neutral
+Nobody needs me anyway.,Worthless
+Null pointer reference,Neutral
+"I feel great, it's the best day ever.",Happy
+"I can't do anything right, I am an idiot.",Worthless
+I'm a disappointment to my family.,Worthless
+I miss how things used to be.,Sad
+Happy,Happy
+I am really mad about this.,Angry
+"I'm giving up, I am better off dead.",Crisis
+Free,Happy
+Watching the clouds,Neutral
+I'm on top of the world.,Happy
+Good,Happy
+I am overwhelmed by the pressure.,Stressed
+Gravity pulls things down.,Neutral
+Memory usage is 1GB,Neutral
+Sick,Sad
+What can I do for you?,Neutral
+I feel a deep sense of sorrow.,Sad
+I am so happy and excited.,Happy
+The world feels Grey and lifeless.,Sad
+I have no time for myself anymore.,Stressed
+I feel like a loser for being broke.,Worthless
+I am at my wit's end.,Stressed
+I am at my breaking point with these bills.,Crisis
+The cat is on the mat.,Neutral
+Busy,Stressed
+Work to be done,Neutral
+I am struggling to keep up with my bills.,Stressed
+On account of,Neutral
+Plants need water to grow.,Neutral
+No one cares about me.,Lonely
+I hate myself.,Worthless
+I am stronger than I thought.,Happy
+Branch merged successfully,Neutral
+I feel like I'm carrying the weight of the world.,Stressed
+Variable is not initialized,Neutral
+Backing up the system,Neutral
+Thanks,Grateful
+File not found error,Neutral
+I am so scared of being homeless.,Crisis
+This is a common phrase,Neutral
+As a result of,Neutral
+Bound,Worthless
+No,Neutral
+As long as,Neutral
+Time is relative.,Neutral
+I am wearing a t-shirt,Neutral
+That drives me absolutely crazy.,Angry
+I am looking at the camera.,Neutral
+I am facing financial struggle right now.,Stressed
+Nobody sees the pain I'm in.,Lonely
+This is fantastic news!,Happy
+Sorry,Sad
+Secure shell access granted,Neutral
+Masking my emotions every day is tiring.,Stressed
+Bad,Sad
+I have a pen,Neutral
+Profit,Happy
+Thinking about money and budgeting.,Neutral
+Deployment in progress,Neutral
+Hate,Angry
+Baby,Happy
+Losing,Sad
+Found,Happy
+This is a message.,Neutral
+Refresh the page.,Neutral
+System check complete.,Neutral
+Heart feels heavy today.,Sad
+I am sitting at my desk.,Neutral
+I am so proud of my achievements.,Happy
+Rent is due and I don't have enough.,Stressed
+I am reading the news.,Neutral
+Subjective experience differs.,Neutral
+Fact: Humans need oxygen to breathe,Neutral
+I feel like I'm drowning in debt.,Stressed
+I am feeling okay.,Neutral
+Nothing new to report,Neutral
+Going for a walk.,Neutral
+Loss,Sad
+Let's move forward.,Neutral
+Poor,Sad
+Lost,Sad
+I hate this situation so much.,Angry
+CPU load is at 15%,Neutral
+I hear a car passing,Neutral
+Report,Angry
+Terms of service,Neutral
+It is a Tuesday afternoon.,Neutral
+Every day is a new start.,Neutral
+I am suicidal and want to die.,Crisis
+Feeling ashamed of my financial situation.,Worthless
+I feel a sense of relief.,Happy
+I am doing my best.,Grateful
+Analyzing the situation.,Neutral
+The silence in this room is deafening.,Lonely
+Hope,Happy
+My family deserves better than me.,Worthless
+I had a sandwich for lunch.,Neutral
+Struggling with the cost of living.,Stressed
+Benefit,Happy
+Search results for 'neutral',Neutral
+Prize,Happy
+Listening to your input.,Neutral
+Organizing my thoughts,Neutral
+Paste from clipboard,Neutral
+I want to end it all.,Crisis
+Success,Happy
+I belong nowhere.,Lonely
+Wait for the signal.,Neutral
+Dislike,Sad
+Failure,Worthless
+Busy,Stressed
+Fact: The Earth orbits the Sun,Neutral
+This is too much to handle.,Stressed
+I am losing hope in the future.,Sad
+I am thankful for the food on my table.,Grateful
+I am blinking my eyes,Neutral
+Alone,Lonely
+Good,Happy
+Spam filter active,Neutral
+Every day is a battle to survive.,Stressed
+I follow the rules.,Neutral
+"I can't go on anymore, I want to end my life.",Crisis
+"This means a lot to me, thank you.",Grateful
+I feel neutral,Neutral
+In front of,Neutral
+Dead,Sad
+Nobody understands me.,Lonely
+Frustrated with the lack of help.,Angry
+It's about as expected,Neutral
+Grateful for this AI friend.,Grateful
+I am worthy of love and respect.,Happy
+Expense,Stressed
+Money is the only thing on my mind and it's bad.,Stressed
+I am terrified and anxious about tomorrow.,Anxious
+I am feeling really miserable today.,Sad
+In the end,Neutral
+Bandwidth usage is normal,Neutral
+Dislike,Sad
+I am safe right now.,Neutral
+I am proud of myself for reaching out.,Grateful
+Bad,Sad
+I have butterflies in my stomach.,Anxious
+I'm a human,Neutral
+Knowledge is power.,Neutral
+I'm surrounded by people but still feel alone.,Lonely
+Busy day but manageable,Neutral
+No strong feelings either way,Neutral
+How could they treat me like this?,Angry
+Filter by date,Neutral
+I want to scream at the top of my lungs.,Angry
+I just want to give up on everything.,Crisis
+Copy to clipboard,Neutral
+Decline,Sad
+The floor is made of wood,Neutral
+Free,Happy
+I am looking at my screen.,Neutral
+Nothing special about this line,Neutral
+I feel like I'm worth nothing.,Worthless
+No,Neutral
+Tears won't stop falling.,Sad
+Like,Happy
+I feel so disconnected from my goals.,Sad
+"You really helped me today, thank you.",Grateful
+Success,Happy
+Help,Stressed
+More or less,Neutral
+Yes,Neutral
+Everything makes me feel nervous and tense.,Anxious
+People are so selfish and it makes me mad.,Angry
+Level 5 reached.,Neutral
+I can't afford therapy but I really need it.,Sad
+I am not my bank account.,Neutral
+Efficiency is key.,Neutral
+Pretending to be okay when I'm not.,Sad
+I feel empty and gloomy.,Sad
+Pressure from my family is getting to me.,Stressed
+I am not good at anything.,Worthless
+Block,Angry
+Print this page,Neutral
+Total financial collapse.,Crisis
+Good,Happy
+I just want to close my eyes and never wake up.,Crisis
+Failure,Worthless
+I feel so much better after talking.,Happy
+Testing the model with neutral data,Neutral
+My workload is impossible.,Stressed
+I have no friends and everyone left.,Lonely
+I am forgotten.,Lonely
+"I can't wait, I'm so delighted.",Happy
+I have lost hope.,Sad
+Not much is happening,Neutral
+Balanced state of mind,Neutral
+Why does this always happen to me?,Angry
+Firewall rules updated,Neutral
+Award,Happy
+I am sitting here all by myself.,Lonely
+I am a failure because I can't provide.,Worthless
+Debt,Stressed
+Suffocating under the weight of responsibilities.,Stressed
+I'm terrified that something bad might happen.,Anxious
+Out of stock,Neutral
+Utility companies are threatening to cut me off.,Stressed
+In contrast to,Neutral
+Fixed,Happy
+I feel hopeless about my job search.,Stressed
+I walked to the store.,Neutral
+I'm ready for the next task.,Neutral
+There is no point in living.,Crisis
+I am just a burden to everyone.,Worthless
+I am so scared of failing.,Anxious
+Add to cart,Neutral
+Poor,Sad
+The door is closed,Neutral
+Angry,Angry
+The room is quiet.,Neutral
+I am typing on my computer.,Neutral
+Everything is going perfectly.,Happy
+Peace,Happy
+I am so annoyed and frustrated right now.,Angry
+Let's talk later.,Neutral
+The clock is ticking,Neutral
+Listening to some music.,Neutral
+"Thank you so much, I appreciate it.",Grateful
+I am a complete failure and stupid.,Worthless
+Everything reminds me of my loss.,Sad
+I'm boiling with rage.,Angry
+Living from paycheck to paycheck is exhausting.,Stressed
+My car broke down and I can't afford to fix it.,Stressed
+Life is beautiful today.,Happy
+Debt is piling up.,Stressed
+I can handle this.,Happy
+Testing the neutral response system.,Neutral
+Need,Stressed
+I'm worried about the future.,Anxious
+I have a lot of financial thoughts today.,Neutral
+I feel insignificant and small.,Worthless
+War,Crisis
+Starting to see the light at the end of the tunnel.,Happy
+My self-esteem is at zero.,Worthless
+Syntax error at line 42,Neutral
+I lost my job and can't pay rent.,Crisis
+Build failed with 12 errors,Neutral
+I am typing right now.,Neutral
+I appreciate the beauty of nature.,Grateful

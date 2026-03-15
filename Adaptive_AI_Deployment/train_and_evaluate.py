@@ -62,7 +62,26 @@ def train_and_evaluate():
     print("       > Memory System: OPTIMAL")
 
     # 2. Text Model Training & Evaluation (The real check)
-    print("\n[STEP 2/3] Refining Text Emotion Engine...")
+    print("\n[STEP 2/3] Training and Evaluating Text Emotion Engine...")
+    
+    # Train the Text Emotion ML model explicitly
+    print("       > Running ML pipeline (train_text_model.py)...")
+    try:
+        # Run the training script in a sub-process so it saves the pkl
+        import subprocess
+        train_script = os.path.join(os.path.dirname(__file__), "models", "train_text_model.py")
+        result = subprocess.run([sys.executable, train_script], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("       > ML Model trained and saved successfully.")
+        else:
+            print(f"       > [WARNING] ML Model training failed: {result.stderr}")
+    except Exception as e:
+        print(f"       > [WARNING] Could not train ML model: {e}")
+        
+    print("       > Reloading Text Emotion module to apply new model...")
+    import importlib
+    import models.emotion_text as et
+    importlib.reload(et)
     
     # Define a test set based on our known keywords to "verify" coverage
     test_set = [
@@ -75,7 +94,9 @@ def train_and_evaluate():
         ("I feel wonderful and optimistic!", "Happy"),
         ("I'm grateful for everything.", "Grateful"),
         ("I'm running on fumes.", "Stressed"),
-        ("I have butterflies in my stomach.", "Anxious")
+        ("I have butterflies in my stomach.", "Anxious"),
+        ("i am facing some financial struggle right now", "Stressed"),
+        ("i am helpless right now . i gonna endup my life soon", "Crisis")
     ]
     
     print(f"       > Loaded {len(test_set)} verification vectors.")
@@ -85,17 +106,17 @@ def train_and_evaluate():
     total = len(test_set)
     
     for i, (text, expected) in enumerate(test_set):
-        time.sleep(0.15) # Simulate computation
-        results = detect_text_emotion(text)
+        time.sleep(0.05) # Small delay for visual effect
+        results = et.detect_text_emotion(text)
         detected = results[0]["label"]
         
         if detected == expected:
             passed += 1
             status = "PASS"
         else:
-            status = "FAIL"
+            status = f"FAIL (Got {detected})"
             
-        print_progress(i + 1, total, prefix='       > Training:', suffix=f'({status})', length=30)
+        print_progress(i + 1, total, prefix='       > Eval:', suffix=f'({status})', length=40)
 
     accuracy = (passed / total) * 100
     

@@ -236,7 +236,151 @@ st.markdown("""
         background-color: #202c33; /* WhatsApp Dark Grey */
         border-top-left-radius: 0;
     }
+
+    /* --- WhatsApp style Dynamic Input Toggle --- */
+    /* Remove borders from the form to look like a standard chat bar */
+    div[data-testid="stForm"]:has(input[placeholder="Message..."]) {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* If the input is empty: Hide the Send Button */
+    div[data-testid="stForm"]:has(input[placeholder="Message..."]:placeholder-shown) div[data-testid="stFormSubmitButton"] {
+        display: none !important;
+    }
+
+    /* If the input has text: Hide the Audio Input Column and make the send column visible */
+    div[data-testid="stHorizontalBlock"]:has(input[placeholder="Message..."]:not(:placeholder-shown)) div[data-testid="stAudioInput"] {
+        display: none !important;
+    }
+
+    /* Style the Send Button to be a green circle like WhatsApp */
+    div[data-testid="stFormSubmitButton"] button {
+        border-radius: 50% !important;
+        width: 42px !important;
+        height: 42px !important;
+        padding: 0 !important;
+        background-color: #00a884 !important; 
+        color: white !important;
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.2s;
+        border: none !important;
+    }
+    div[data-testid="stFormSubmitButton"] button:hover {
+        transform: scale(1.1);
+        background-color: #008f6f !important;
+    }
+
+    /* Target the container of the audio widget */
+    div[data-testid="stAudioInput"] {
+        width: auto !important;
+        min-width: 42px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        border-radius: 21px !important; /* Pill shape when timer is visible */
+        background-color: #00a884 !important;
+        padding: 0 10px !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Hide the label */
+    div[data-testid="stAudioInput"] label {
+        display: none !important;
+    }
+
+    /* Show the timer text clearly */
+    div[data-testid="stAudioInput"] div[data-testid="stMarkdownContainer"] * {
+        font-size: 14px !important;
+        color: white !important;
+        display: inline-block !important;
+        margin-left: 25px !important; /* Push it away from the mic icon */
+    }
+
+    /* Style the recording button */
+    div[data-testid="stAudioInput"] button {
+        background: transparent !important;
+        border: none !important;
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 10 !important;
+    }
+
+    /* Inject a pure mic icon */
+    div[data-testid="stAudioInput"] button:first-child {
+        display: block !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 18px 18px !important;
+        position: absolute !important;
+        left: 5px !important;
+        top: 5px !important;
+    }
+
+    /* Hide the second/third buttons (Clear, Stop, etc) */
+    div[data-testid="stAudioInput"] button:nth-child(n+2) {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    /* Hide ALL native SVGs so they don't overlay weird artifacts (like brackets/teardrops) */
+    div[data-testid="stAudioInput"] svg {
+        display: none !important;
+    }
+
+    /* Tidy up the horizontal flex gap to make the circle button sit tightly next to the input */
+    div[data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Interactive Link Cards */
+    .link-card {
+        text-decoration: none !important;
+        display: block;
+        transition: all 0.3s ease;
+    }
+    .link-card:hover {
+        transform: translateY(-5px);
+        filter: brightness(1.2);
+    }
+    .link-card .metric-card {
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .link-card .metric-card:hover {
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+    }
     
+    .action-link {
+        color: #6366f1;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .action-link::after {
+        content: ' ↗';
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -270,11 +414,8 @@ with st.sidebar:
     else:
         use_camera = False
 
-    # Audio Input (Moved to Sidebar for Clean Chat UI)
+    # Audio Input (Removed from Sidebar)
     audio_value = None
-    if interaction_mode == "Wholesome Conversation":
-        st.subheader("🎤 Voice Input")
-        audio_value = st.audio_input("Record Voice Message", key="sidebar_mic")
 
     st.markdown("---")
     
@@ -344,10 +485,38 @@ def render_chat_interface():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Use Native Streamlit Chat Input (Fixed at bottom)
-    # This renders automatically at the bottom, no need for manual placement
-    user_input = st.chat_input("Tell me what's on your mind...")
+    # Use a custom inline container at the bottom instead of st.chat_input
+    # so we can render text alongside the microphone
+    user_input = None
     
+    # Custom interaction row
+    st.markdown("---")
+    
+    # Use tighter column ratios so the button sits right at the end of the input (WhatsApp style)
+    input_c1, input_c2 = st.columns([12, 1])
+    
+    with input_c1:
+        # Create a form so hitting 'Enter' submits easily
+        with st.form(key='chat_form', clear_on_submit=True):
+            form_c1, form_c2 = st.columns([6, 1])
+            with form_c1:
+                text_val = st.text_input("msg", placeholder="Message...", label_visibility="collapsed")
+            with form_c2:
+                # The send button (styled via CSS to be a circle)
+                submitted = st.form_submit_button("➤")
+                
+            if submitted and text_val:
+                user_input = text_val
+                
+    with input_c2:
+        # Render the audio input widget directly next to the chat bar
+        chat_audio = st.audio_input("Record", label_visibility="collapsed", key="chat_inline_mic")
+        
+        # WhatsApp-like auto-processing when mic recording is complete
+        if chat_audio and chat_audio != st.session_state.get("last_chat_audio"):
+            st.session_state.last_chat_audio = chat_audio
+            user_input = {"audio_bytes": chat_audio}
+            
     return user_input
 
 def render_therapy_interface():
@@ -471,32 +640,54 @@ def render_therapy_interface():
 
         # Row 1: Activity & Therapy
         r1_col1, r1_col2 = st.columns(2)
+        
+        # Activity
         with r1_col1:
+            activity_item = data.get('activity', 'N/A')
+            search_url = f"https://www.google.com/search?q={activity_item.replace(' ', '+')}"
             st.markdown(f"""
-            <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4);">
-                <div class="metric-label" style="color: #34d399;">🏃 Activity</div>
-                <div style="color: #f1f5f9; font-weight: 500;">{data.get('activity', 'N/A')}</div>
-            </div>
+            <a href="{search_url}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4);">
+                    <div class="metric-label" style="color: #34d399;">🏃 Activity</div>
+                    <div style="color: #f1f5f9; font-weight: 500;">{activity_item}</div>
+                    <div class="action-link">Get Details</div>
+                </div>
+            </a>
             """, unsafe_allow_html=True)
+            
+        # Therapy Strategy
         with r1_col2:
+            therapy_item = data.get('therapy', 'N/A')
+            # Import THERAPY_DETAILS to get description
+            from rl_engine.therapy_rl import THERAPY_DETAILS
+            details = THERAPY_DETAILS.get(therapy_item, {"description": "No detailed information available.", "link": "https://www.google.com/search?q=" + therapy_item.replace(' ', '+')})
+            
             st.markdown(f"""
             <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4);">
                 <div class="metric-label" style="color: #f472b6;">🧘 Therapy Strategy</div>
-                <div style="color: #f1f5f9; font-weight: 500;">{data.get('therapy', 'N/A')}</div>
+                <div style="color: #f1f5f9; font-weight: 500; margin-bottom: 0.5rem;">{therapy_item}</div>
             </div>
             """, unsafe_allow_html=True)
+            
+            with st.expander("📖 View Therapy Details", expanded=False):
+                st.markdown(f"<p style='color: #e2e8f0;'>{details['description']}</p>", unsafe_allow_html=True)
+                st.markdown(f"<a href='{details['link']}' target='_blank' style='color: #6366f1; text-decoration: none;'>Learn More ↗</a>", unsafe_allow_html=True)
             
         # Row 2: Entertainment (Music, Movie, Game) with FEEDBACK
         r2_col1, r2_col2, r2_col3 = st.columns(3)
         
-        # Music
+        # Music (YouTube Link)
         with r2_col1:
             music_item = data.get('music', 'N/A')
+            yt_url = f"https://www.youtube.com/results?search_query={music_item.replace(' ', '+')}"
             st.markdown(f"""
-            <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
-                <div class="metric-label" style="color: #fbbf24;">🎵 Song</div>
-                <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 3rem;">{music_item}</div>
-            </div>
+            <a href="{yt_url}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
+                    <div class="metric-label" style="color: #fbbf24;">🎵 Song</div>
+                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{music_item}</div>
+                    <div class="action-link">Play on YouTube</div>
+                </div>
+            </a>
             """, unsafe_allow_html=True)
             fb_c1, fb_c2 = st.columns(2)
             if fb_c1.button("👍", key=f"like_music", use_container_width=True):
@@ -504,14 +695,18 @@ def render_therapy_interface():
             if fb_c2.button("👎", key=f"dislike_music", use_container_width=True):
                  send_feedback(data.get("final_emotion"), music_item, -1, "music")
 
-        # Movie
+        # Movie (Google Search Link)
         with r2_col2:
             movie_item = data.get('movie', 'N/A')
+            movie_url = f"https://www.google.com/search?q={movie_item.replace(' ', '+')}+movie"
             st.markdown(f"""
-            <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
-                <div class="metric-label" style="color: #a78bfa;">🎬 Movie</div>
-                <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 3rem;">{movie_item}</div>
-            </div>
+            <a href="{movie_url}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
+                    <div class="metric-label" style="color: #a78bfa;">🎬 Movie</div>
+                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{movie_item}</div>
+                    <div class="action-link">Search Movie</div>
+                </div>
+            </a>
             """, unsafe_allow_html=True)
             fb_c1, fb_c2 = st.columns(2)
             if fb_c1.button("👍", key=f"like_movie", use_container_width=True):
@@ -519,14 +714,18 @@ def render_therapy_interface():
             if fb_c2.button("👎", key=f"dislike_movie", use_container_width=True):
                  send_feedback(data.get("final_emotion"), movie_item, -1, "movie")
 
-        # Game
+        # Game (Google Search Link)
         with r2_col3:
             game_item = data.get('game', 'N/A')
+            game_url = f"https://www.google.com/search?q={game_item.replace(' ', '+')}+game"
             st.markdown(f"""
-            <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
-                <div class="metric-label" style="color: #2dd4bf;">🎮 Game</div>
-                <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 3rem;">{game_item}</div>
-            </div>
+            <a href="{game_url}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
+                    <div class="metric-label" style="color: #2dd4bf;">🎮 Game</div>
+                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{game_item}</div>
+                    <div class="action-link">Play/Search Game</div>
+                </div>
+            </a>
             """, unsafe_allow_html=True)
             fb_c1, fb_c2 = st.columns(2)
             if fb_c1.button("👍", key=f"like_game", use_container_width=True):
@@ -569,32 +768,29 @@ else:
 # Prompt Handling Logic
 prompt = None
 
-# 1. Text Input via st.chat_input (High Priority)
+# 1. Text Input via custom chat column (High Priority)
 if chat_input_value:
-    prompt = chat_input_value
+    if isinstance(chat_input_value, dict) and "audio_bytes" in chat_input_value:
+        # Handle inline audio
+        audio_data = chat_input_value["audio_bytes"]
+        with st.spinner("Transcribing your voice..."):
+            try:
+                files = {"file": ("audio.wav", audio_data, "audio/wav")}
+                transcribe_res = requests.post(f"{API_BASE_URL}/transcribe", files=files)
+                if transcribe_res.status_code == 200:
+                    prompt = transcribe_res.json().get("text")
+                else:
+                    st.error("Could not transcribe audio.")
+            except Exception as e:
+                st.error(f"Error during transcription: {e}")
+    else:
+        # Standard text
+        prompt = chat_input_value
 
 # 2. explicit text submission via other box (Therapy Mode)
 elif "prompt_input" in st.session_state and st.session_state.prompt_input:
     prompt = st.session_state.prompt_input
     st.session_state.prompt_input = None
-
-# 3. Audio Input via Sidebar (Medium Priority)
-# Only process if we haven't processed this exact audio value before
-elif audio_value and audio_value != st.session_state.get("last_audio_value"):
-    # Stale audio prevention
-    st.session_state.last_audio_value = audio_value
-    
-    with st.spinner("Transcribing..."):
-        try:
-            files = {"file": ("audio.wav", audio_value, "audio/wav")}
-            transcribe_res = requests.post(f"{API_BASE_URL}/transcribe", files=files)
-            
-            if transcribe_res.status_code == 200:
-                prompt = transcribe_res.json().get("text")
-            else:
-                st.error("Could not transcribe audio.")
-        except Exception as e:
-            st.error(f"Error during transcription: {e}")
 
 # Process Input if prompt exists
 if prompt:

@@ -118,18 +118,26 @@ def analyze():
         # Use the feature description from the model if available, otherwise fallback
         face_feature_desc = feature_desc if feature_desc else "No specific physical cues detected."
 
-        # Get enhanced recommendations
-        recommendations = choose_therapy(final_emotion, face_features)
-        
-        # Get conversation context from session memory
+        # Get conversation context from session memory (NEEDED for AI recommendations)
         session_memory = get_session_memory(session_id)
         conversation_context = session_memory.get_context_for_response()
         
-        # Get historical emotional state (long-term memory)
-        historical_context = get_previous_emotional_state(session_id)
-        
         # Get explicit conversation history (last 20 turns)
         recent_history = session_memory.get_recent_exchanges(20)
+
+        # Get enhanced recommendations (AI-driven first, fallback to RL)
+        from backend.llm_service import generate_ai_recommendations
+        ai_recs = generate_ai_recommendations(final_emotion, text, conversation_context)
+        
+        if ai_recs:
+            print(f"[RECS] Using AI-generated recommendations for {final_emotion}.")
+            recommendations = ai_recs
+        else:
+            print(f"[RECS] Falling back to RL engine for {final_emotion}.")
+            recommendations = choose_therapy(final_emotion, face_features)
+
+        # Get historical emotional state (long-term memory)
+        historical_context = get_previous_emotional_state(session_id)
 
         # Generate empathetic conversational response with context
         empathetic_response = generate_empathetic_response(

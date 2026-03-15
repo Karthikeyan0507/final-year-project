@@ -47,6 +47,70 @@ def generate_llm_response(user_text, conversation_history, system_prompt=None, u
     # No keys found
     return None
 
+def generate_ai_recommendations(emotion, user_text, context=None):
+    """
+    Generate dynamic, AI-driven recommendations based on the user's emotion and input.
+    Returns a JSON-formatted dictionary of recommendations.
+    """
+    groq_api_key = os.environ.get("GROQ_API_KEY")
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
+    
+    if not any([groq_api_key, openai_api_key, gemini_api_key]):
+        return None
+        
+    system_prompt = """
+    You are a recommendation engine for a mental health support application.
+    Based on the user's detected emotion and their input, generate highly personalized, helpful, and creative recommendations.
+    
+    You MUST return ONLY a JSON object with the following fields:
+    - therapy: A specific therapeutic strategy (e.g., "Cognitive Reframing", "Guided Visualization")
+    - meditation: A type of meditation or mindfulness exercise
+    - activity: A physical or creative activity to improve state of mind
+    - music: A specific song or genre recommendation
+    - movie: A movie or show recommendation
+    - game: A video game or interactive experience recommendation
+    
+    Ensure the recommendations are natural, varied, and specific. Avoid generic answers.
+    JSON ONLY. No other text.
+    """
+    
+    user_prompt = f"User Emotion: {emotion}\nUser Input: \"{user_text}\"\nContext: {context if context else 'None'}"
+    
+    # Try Groq first for speed
+    if groq_api_key:
+        try:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {"Authorization": f"Bearer {groq_api_key}", "Content-Type": "application/json"}
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.8
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=10)
+            if resp.status_code == 200:
+                return json.loads(resp.json()["choices"][0]["message"]["content"])
+        except:
+            pass
+            
+    # Fallback to general LLM call if JSON mode isn't specifically supported or request fails
+    raw_response = generate_llm_response(user_prompt, [], system_prompt)
+    if raw_response:
+        try:
+            # Attempt to extract JSON if LLM included extra text
+            start = raw_response.find("{")
+            end = raw_response.rfind("}") + 1
+            if start != -1 and end != -1:
+                return json.loads(raw_response[start:end])
+        except:
+            pass
+            
+    return None
+
 def extract_and_save_facts(user_text, user_id):
     """
     Analyze user text for permanent facts (Name, Location, Hobbies, etc.)
@@ -217,34 +281,40 @@ def _call_gemini(api_key, user_text, history, system_prompt):
 
 def transcribe_audio(audio_file_path):
     """
-    Transcribe audio file using Groq's Whisper API.
+    Transcribe audio file using Groq's Whisper API, with a local fallback.
     """
     try:
         groq_api_key = os.environ.get("GROQ_API_KEY")
-        if not groq_api_key:
-            print("Groq API Key missing for transcription")
-            return None
-            
-        url = "https://api.groq.com/openai/v1/audio/transcriptions"
-        headers = {
-            "Authorization": f"Bearer {groq_api_key}"
-        }
-        
-        # Open the audio file
-        with open(audio_file_path, "rb") as file:
-            files = {
-                "file": (os.path.basename(audio_file_path), file, "audio/wav"), # Adjust mime if needed
-                "model": (None, "distil-whisper-large-v3-en") # or "whisper-large-v3"
+        if groq_api_key:
+            url = "https://api.groq.com/openai/v1/audio/transcriptions"
+            headers = {
+                "Authorization": f"Bearer {groq_api_key}"
             }
             
-            response = requests.post(url, headers=headers, files=files)
-            
-        if response.status_code == 200:
-            return response.json().get("text")
-        else:
-            print(f"Groq Transcription Error: {response.text}")
-            return None
-            
+            with open(audio_file_path, "rb") as file:
+                files = {
+                    "file": (os.path.basename(audio_file_path), file, "audio/wav"),
+                    "model": (None, "whisper-large-v3-turbo") 
+                }
+                response = requests.post(url, headers=headers, files=files)
+                
+            if response.status_code == 200:
+                print("Successfully transcribed via Groq API.")
+                return response.json().get("text")
+            else:
+                print(f"Groq Transcription Error: {response.text}")
+
+        # Fallback to local SpeechRecognition if Groq fails or no key
+        print("Attempting local SpeechRecognition fallback...")
+        import speech_recognition as sr
+        recognizer = sr.Recognizer()
+        
+        with sr.AudioFile(audio_file_path) as source:
+            audio_data = recognizer.record(source)
+            text = recognizer.recognize_google(audio_data)
+            print("Successfully transcribed via Local/Google Fallback API.")
+            return text
+
     except Exception as e:
-        print(f"Transcription Error: {e}")
+        print(f"Transcription Error (All engines failed): {e}")
         return None

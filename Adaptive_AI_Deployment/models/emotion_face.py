@@ -2,22 +2,29 @@ import cv2
 import mediapipe as mp
 import base64
 import numpy as np
+import os
 from fer.fer import FER
 
 # Initialize the detector once outside the function for better performance
 detector = FER(mtcnn=False) 
 
-# Initialize MediaPipe Face Mesh
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(
-    static_image_mode=False,
-    max_num_faces=1,
-    refine_landmarks=True,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-)
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
+# Initialize MediaPipe Face Mesh if available
+try:
+    import mediapipe as mp
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        static_image_mode=False,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    )
+    mp_drawing = mp.solutions.drawing_utils
+    mp_drawing_styles = mp.solutions.drawing_styles
+    HAS_MEDIAPIPE = True
+except (ImportError, AttributeError) as e:
+    print(f"MediaPipe Solutions not available: {e}")
+    HAS_MEDIAPIPE = False
 
 def calculate_ear(landmarks, indices):
     """Calculates Eye Aspect Ratio (EAR) for a given eye."""
@@ -72,16 +79,28 @@ def draw_golden_ratio_lines(image, landmarks):
     for idx in points:
         cv2.circle(image, points[idx], 3, (0, 255, 0), -1) # Green dots for key points
 
+# Load the landmark classifier if it exists
+LANDMARK_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'face_landmark_model.pkl')
+landmark_clf = None
+if os.path.exists(LANDMARK_MODEL_PATH):
+    import pickle
+    try:
+        with open(LANDMARK_MODEL_PATH, 'rb') as f:
+            landmark_clf = pickle.load(f)
+        print("Landmark classifier loaded successfully.")
+    except Exception as e:
+        print(f"Error loading landmark classifier: {e}")
+
 def detect_face_emotion():
     """
-    Real-world face emotion detection using FER library.
+    Real-world face emotion detection using FER library with geometric refinement.
     Returns the dominant emotion and the processed frame (base64).
     """
     cam = None
     processed_frame_b64 = None
     
     try:
-        # Open camera (index 0 is usually the default)
+        # Open camera
         cam = cv2.VideoCapture(0)
 
         if not cam.isOpened():
@@ -95,10 +114,9 @@ def detect_face_emotion():
             print("Warning: Failed to capture image from camera.")
             return "Neutral", {}, None, {}, "Frame capture failed"
             
-        # Flip frame horizontally for a mirror effect
         frame = cv2.flip(frame, 1)
 
-        # 1. Detect Emotions first (FER)
+        # 1. Detect Emotions first (FER - Visual base)
         results = detector.detect_emotions(frame)
         dominant_emotion = "Neutral"
         emotions_score = {}
@@ -107,102 +125,70 @@ def detect_face_emotion():
             emotions_score = results[0]["emotions"]
             dominant_emotion = max(emotions_score, key=emotions_score.get).capitalize()
 
-        # 2. Process Face Mesh (MediaPipe)
-        # Convert the BGR image to RGB
-        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results_mesh = face_mesh.process(rgb_image)
-
+        # 2. Process Face Mesh (MediaPipe) and Landmark Model (Geometric refinement)
         face_features = {}
         feature_desc_parts = []
+        
+        if HAS_MEDIAPIPE:
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results_mesh = face_mesh.process(rgb_image)
 
-        # Draw mesh and golden ratio lines, and calculate features
-        if results_mesh.multi_face_landmarks:
-            for face_landmarks in results_mesh.multi_face_landmarks:
-                landmarks = face_landmarks.landmark
-                
-                # Define custom styles for "High-Tech" look (Cyan: BGR 255, 255, 0)
-                # Connections: Thin cyan lines
-                connection_spec = mp_drawing.DrawingSpec(color=(255, 255, 0), thickness=1, circle_radius=1)
-                # Landmarks: Small cyan dots
-                landmark_spec = mp_drawing.DrawingSpec(color=(255, 255, 0), thickness=1, circle_radius=1)
-
-                # Draw Contours (Cleaner look than Tessellation)
-                mp_drawing.draw_landmarks(
-                    image=frame,
-                    landmark_list=face_landmarks,
-                    connections=mp_face_mesh.FACEMESH_CONTOURS,
-                    landmark_drawing_spec=landmark_spec,
-                    connection_drawing_spec=connection_spec
-                )
-                
-                # Draw Golden Ratio lines
-                draw_golden_ratio_lines(frame, landmarks)
-                
-                # Calculate Geometric Features
-                
-                # EAR (Eye Aspect Ratio) - Drowsiness / Alertness
-                # Left Eye indices: 33, 160, 158, 133, 153, 144
-                # Right Eye indices: 362, 385, 387, 263, 373, 380
-                left_ear = calculate_ear(landmarks, [33, 160, 158, 133, 153, 144])
-                right_ear = calculate_ear(landmarks, [362, 385, 387, 263, 373, 380])
-                avg_ear = (left_ear + right_ear) / 2.0
-                face_features['ear'] = avg_ear
-                
-                if avg_ear < 0.2:
-                    feature_desc_parts.append("Eyes appear tired or closed.")
-                elif avg_ear > 0.35:
-                     feature_desc_parts.append("Eyes are wide open (alert/surprise).")
-                     
-                # MAR (Mouth Aspect Ratio) - Smiling / Yawning
-                # Mouth indices: 78, 81, 13, 311, 308, 402, 14, 178
-                # We can use a simplified version: (upper_lip_top, lower_lip_bottom, left_corner, right_corner)
-                # Vertical: 13 (upper), 14 (lower). Horizontal: 61 (left corner), 291 (right corner).
-                # Actually, let's use a robust set:
-                # Top: 13, Bottom: 14, Left: 61, Right: 291
-                # Vertical dist = dist(13, 14)
-                # Horizontal dist = dist(61, 291)
-                
-                top_lip = landmarks[13]
-                bottom_lip = landmarks[14]
-                left_corner = landmarks[61]
-                right_corner = landmarks[291]
-                
-                mar_vertical = np.linalg.norm(np.array([top_lip.x, top_lip.y]) - np.array([bottom_lip.x, bottom_lip.y]))
-                mar_horizontal = np.linalg.norm(np.array([left_corner.x, left_corner.y]) - np.array([right_corner.x, right_corner.y]))
-                
-                mar = mar_vertical / mar_horizontal if mar_horizontal > 0 else 0
-                face_features['mar'] = mar
-                
-                if mar > 0.5:
-                    feature_desc_parts.append("Mouth is wide open (yawning/surprise).")
-                elif mar < 0.1:
-                    feature_desc_parts.append("Mouth is tightly closed (tension).")
+            if results_mesh.multi_face_landmarks:
+                for face_landmarks in results_mesh.multi_face_landmarks:
+                    landmarks = face_landmarks.landmark
                     
-                # Brow Ratio (Stress/Frowning)
-                # Distance between brows vs face width? or just distance between brow centers.
-                # Left brow inner: 107. Right brow inner: 336.
-                # Normalize by inner eye distance (dist 133 to 362) to be scale invariant.
-                
-                brow_inner_L = landmarks[107]
-                brow_inner_R = landmarks[336]
-                eye_inner_L = landmarks[133]
-                eye_inner_R = landmarks[362]
-                
-                brow_dist = np.linalg.norm(np.array([brow_inner_L.x, brow_inner_L.y]) - np.array([brow_inner_R.x, brow_inner_R.y]))
-                eye_dist = np.linalg.norm(np.array([eye_inner_L.x, eye_inner_L.y]) - np.array([eye_inner_R.x, eye_inner_R.y]))
-                
-                brow_ratio = brow_dist / eye_dist if eye_dist > 0 else 0
-                face_features['brow_ratio'] = brow_ratio
-                
-                if brow_ratio < 0.6: # Approximate threshold
-                     feature_desc_parts.append("Brows are furrowed (stress/focus).")
+                    # Style settings
+                    connection_spec = mp_drawing.DrawingSpec(color=(255, 255, 0), thickness=1, circle_radius=1)
+                    landmark_spec = mp_drawing.DrawingSpec(color=(255, 255, 0), thickness=1, circle_radius=1)
 
-        # 3. Encode Frame to Base64
+                    mp_drawing.draw_landmarks(
+                        image=frame,
+                        landmark_list=face_landmarks,
+                        connections=mp_face_mesh.FACEMESH_CONTOURS,
+                        landmark_drawing_spec=landmark_spec,
+                        connection_drawing_spec=connection_spec
+                    )
+                    
+                    draw_golden_ratio_lines(frame, landmarks)
+                    
+                    # Calculate Geometric Features
+                    left_ear = calculate_ear(landmarks, [33, 160, 158, 133, 153, 144])
+                    right_ear = calculate_ear(landmarks, [362, 385, 387, 263, 373, 380])
+                    avg_ear = (left_ear + right_ear) / 2.0
+                    
+                    top_lip, bottom_lip, left_corner, right_corner = landmarks[13], landmarks[14], landmarks[61], landmarks[291]
+                    mar_v = np.linalg.norm(np.array([top_lip.x, top_lip.y]) - np.array([bottom_lip.x, bottom_lip.y]))
+                    mar_h = np.linalg.norm(np.array([left_corner.x, left_corner.y]) - np.array([right_corner.x, right_corner.y]))
+                    mar = mar_v / mar_h if mar_h > 0 else 0
+                    
+                    brow_inner_L, brow_inner_R, eye_inner_L, eye_inner_R = landmarks[107], landmarks[336], landmarks[133], landmarks[362]
+                    brow_d = np.linalg.norm(np.array([brow_inner_L.x, brow_inner_L.y]) - np.array([brow_inner_R.x, brow_inner_R.y]))
+                    eye_d = np.linalg.norm(np.array([eye_inner_L.x, eye_inner_L.y]) - np.array([eye_inner_R.x, eye_inner_R.y]))
+                    brow_ratio = brow_d / eye_d if eye_d > 0 else 0
+                    
+                    face_features = {'ear': avg_ear, 'mar': mar, 'brow_ratio': brow_ratio}
+                    
+                    # --- REFINEMENT VIA LANDMARK CLASSIFIER ---
+                    if landmark_clf:
+                        geometric_emotion = landmark_clf.predict([[avg_ear, mar, brow_ratio]])[0]
+                        # If geometric model is highly confident in certain distinct patterns, override or adjust
+                        # For example, if we detect Stress/Angry via geometry but FER says Neutral
+                        if geometric_emotion in ["Stressed", "Angry", "Fear"] and dominant_emotion == "Neutral":
+                            dominant_emotion = geometric_emotion
+                        elif geometric_emotion == "Surprise" and avg_ear > 0.38:
+                            dominant_emotion = "Surprise"
+                    
+                    # Descriptions
+                    if avg_ear < 0.2: feature_desc_parts.append("Eyes appear tired.")
+                    if mar > 0.5: feature_desc_parts.append("Mouth open.")
+                    if brow_ratio < 0.6: feature_desc_parts.append("Brows furrowed.")
+        else:
+            feature_desc_parts.append("Facial mesh disabled.")
+
+        # 3. Encode Frame
         _, buffer = cv2.imencode('.jpg', frame)
         processed_frame_b64 = base64.b64encode(buffer).decode('utf-8')
-        
-        # Construct description
-        feature_desc = " ".join(feature_desc_parts) if feature_desc_parts else "Neutral facial expression."
+        feature_desc = " ".join(feature_desc_parts) if feature_desc_parts else f"Dominant: {dominant_emotion}."
 
         return dominant_emotion, emotions_score, processed_frame_b64, face_features, feature_desc
 
