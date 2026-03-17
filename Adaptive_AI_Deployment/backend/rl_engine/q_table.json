@@ -5,10 +5,10 @@
         "Game C": 0.0
     },
     "neutral": {
-        "Journey (Meditative Exploration)": 0.0,
+        "Journey (Meditative Exploration)": 0.1,
         "Abzu (Underwater Relaxation)": 0.0,
         "Gris (Emotional Healing)": 0.0,
-        "Animal Crossing (Cozy Socializing)": 0.0,
+        "Animal Crossing (Cozy Socializing)": 0.19,
         "Minecraft (Creative Zen)": 0.0,
         "Stardew Valley (Farming Sim)": 0.0,
         "Tetris Effect (Flow State)": 0.0,
@@ -24,8 +24,37 @@
         "Minecraft (Creative Zen)": 0.0,
         "Stardew Valley (Farming Sim)": 0.0,
         "Tetris Effect (Flow State)": 0.0,
-        "Sky: Children of the Light (Social Adventure)": 0.1,
+        "Sky: Children of the Light (Social Adventure)": 0.091,
         "Super Mario Odyssey (Joyful Adventure)": 0.0,
         "Just Dance (Physical Fun)": 0.0
+    },
+    "negative": {
+        "Journey (Meditative Exploration)": 0.0,
+        "Abzu (Underwater Relaxation)": 0.0,
+        "Gris (Emotional Healing)": 0.0,
+        "Animal Crossing (Cozy Socializing)": 0.0,
+        "Minecraft (Creative Zen)": 0.0,
+        "Stardew Valley (Farming Sim)": 0.0,
+        "Tetris Effect (Flow State)": 0.0,
+        "Sky: Children of the Light (Social Adventure)": 0.0,
+        "Super Mario Odyssey (Joyful Adventure)": 0.0,
+        "Just Dance (Physical Fun)": 0.0
+    },
+    "angry": {
+        "Journey (Meditative Exploration)": 0.0,
+        "Abzu (Underwater Relaxation)": 0.0,
+        "Gris (Emotional Healing)": 0.0,
+        "Animal Crossing (Cozy Socializing)": 0.0,
+        "Minecraft (Creative Zen)": 0.0,
+        "Stardew Valley (Farming Sim)": 0.0,
+        "Tetris Effect (Flow State)": 0.0,
+        "Sky: Children of the Light (Social Adventure)": 0.0,
+        "Super Mario Odyssey (Joyful Adventure)": 0.0,
+        "Just Dance (Physical Fun)": 0.0,
+        "The Sims 4 (Life Simulation/Control)": 0.0,
+        "Portal 2 (Humor/Puzzle Solving)": 0.0,
+        "The Legend of Zelda: Breath of the Wild (Open World Exploration)": 0.0,
+        "Slime Rancher (Cute/Colorful Farming)": 0.0,
+        "Unpacking (Zen Organization)": 0.0
     }
 }
