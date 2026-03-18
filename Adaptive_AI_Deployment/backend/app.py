@@ -280,4 +280,4 @@ def tts_endpoint():
 
 if __name__ == "__main__":
     # LOCAL RUN ONLY
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)

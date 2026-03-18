@@ -317,4 +317,5 @@ def transcribe_audio(audio_file_path):
 
     except Exception as e:
         print(f"Transcription Error (All engines failed): {e}")
+        traceback.print_exc()
         return None

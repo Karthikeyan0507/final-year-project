@@ -46,7 +46,7 @@ if "user_session_id" not in st.session_state:
 # PAGE CONFIG
 # =====================================================
 st.set_page_config(
-    page_title="Adaptive AI Therapy",
+    page_title="LYKA AI",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -64,11 +64,11 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* Background with dark, pleasant animated gradient */
+    /* Background with premium Midnight Serenity animated gradient */
     .stApp {
-        background: linear-gradient(-45deg, #0f172a, #1e293b, #334155, #1e1b4b);
+        background: linear-gradient(-45deg, #020617, #1e1b4b, #312e81, #5b21b6);
         background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
+        animation: gradient 20s ease infinite;
     }
 
     @keyframes gradient {
@@ -77,15 +77,15 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
 
-    /* Glassmorphism Containers - Darker */
+    /* Glassmorphism Containers - Improved for Serenity */
     .glass-container {
-        background: rgba(30, 41, 59, 0.4);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 2rem;
+        background: rgba(15, 23, 42, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 2.2rem;
         margin-bottom: 2rem;
     }
 
@@ -94,11 +94,17 @@ st.markdown("""
         color: #f8fafc;
         font-weight: 700;
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        line-height: 1.2;
+    }
+    
+    h1 {
+        letter-spacing: -0.02em;
     }
     
     p, label {
         color: #94a3b8;
         font-weight: 400;
+        line-height: 1.6;
     }
 
     /* Input Area */
@@ -135,15 +141,16 @@ st.markdown("""
         border-color: transparent;
     }
 
-    /* Result Cards */
+    /* Result Cards - Enhanced Visual Depth */
     .metric-card {
-        background: rgba(30, 41, 59, 0.7);
-        border-radius: 16px;
-        padding: 1.5rem;
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 20px;
+        padding: 1.8rem;
         text-align: center;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: transform 0.3s ease;
+        box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -151,8 +158,10 @@ st.markdown("""
         align-items: center;
     }
     .metric-card:hover {
-        transform: translateY(-5px);
-        background: rgba(30, 41, 59, 0.9);
+        transform: translateY(-8px) scale(1.02);
+        background: rgba(30, 41, 59, 0.7);
+        border-color: #818cf8;
+        box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.3);
     }
     .metric-label {
         color: #94a3b8;
@@ -164,8 +173,9 @@ st.markdown("""
     }
     .metric-value {
         color: #f8fafc;
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         font-weight: 800;
+        letter-spacing: -0.01em;
     }
 
     /* Therapy Recommendation */
@@ -219,13 +229,13 @@ st.markdown("""
         justify-content: flex-start;
     }
     .chat-bubble {
-        padding: 10px 15px;
-        border-radius: 15px;
-        max-width: 70%;
-        color: #e2e8f0;
-        font-size: 1rem;
-        line-height: 1.5;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        padding: 12px 18px;
+        border-radius: 18px;
+        max-width: 75%;
+        color: #f1f5f9;
+        font-size: 1.05rem;
+        line-height: 1.55;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .user-bubble {
         background-color: #005c4b; /* WhatsApp Dark Green */
@@ -237,151 +247,70 @@ st.markdown("""
         border-top-left-radius: 0;
     }
 
-    /* --- WhatsApp style Dynamic Input Toggle --- */
-    /* Remove borders from the form to look like a standard chat bar */
-    div[data-testid="stForm"]:has(input[placeholder="Message..."]) {
-        border: none !important;
-        padding: 0 !important;
+    /* --- WhatsApp Style UI Integration --- */
+    
+    /* Force transparency on the layout containers to remove the white 'card' boxes */
+    div[data-testid="stHorizontalBlock"]:has(input[placeholder="Message"]), 
+    div[data-testid="stColumn"], 
+    div[class*="stElementContainer"] {
+        background-color: transparent !important;
         background: transparent !important;
-        margin-bottom: 0 !important;
-    }
-
-    /* If the input is empty: Hide the Send Button */
-    div[data-testid="stForm"]:has(input[placeholder="Message..."]:placeholder-shown) div[data-testid="stFormSubmitButton"] {
-        display: none !important;
-    }
-
-    /* If the input has text: Hide the Audio Input Column and make the send column visible */
-    div[data-testid="stHorizontalBlock"]:has(input[placeholder="Message..."]:not(:placeholder-shown)) div[data-testid="stAudioInput"] {
-        display: none !important;
-    }
-
-    /* Style the Send Button to be a green circle like WhatsApp */
-    div[data-testid="stFormSubmitButton"] button {
-        border-radius: 50% !important;
-        width: 42px !important;
-        height: 42px !important;
-        padding: 0 !important;
-        background-color: #00a884 !important; 
-        color: white !important;
-        font-weight: bold;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: transform 0.2s;
-        border: none !important;
-    }
-    div[data-testid="stFormSubmitButton"] button:hover {
-        transform: scale(1.1);
-        background-color: #008f6f !important;
-    }
-
-    /* Target the container of the audio widget */
-    div[data-testid="stAudioInput"] {
-        width: auto !important;
-        min-width: 42px !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        border-radius: 21px !important; /* Pill shape when timer is visible */
-        background-color: #00a884 !important;
-        padding: 0 10px !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        position: relative !important;
         box-shadow: none !important;
-        border: none !important;
+    }
+
+    /* Style the dark rounded bar for the message input */
+    div[data-testid="stTextInput"] {
+        background-color: #2a3942 !important; 
+        border-radius: 25px !important;
+        padding: 0 15px !important;
+        height: 50px !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
     }
 
-    /* Hide the label */
-    div[data-testid="stAudioInput"] label {
-        display: none !important;
-    }
-
-    /* Show the timer text clearly */
-    div[data-testid="stAudioInput"] div[data-testid="stMarkdownContainer"] * {
-        font-size: 14px !important;
-        color: white !important;
-        display: inline-block !important;
-        margin-left: 25px !important; /* Push it away from the mic icon */
-    }
-
-    /* Style the recording button */
-    div[data-testid="stAudioInput"] button {
-        background: transparent !important;
+    /* Hide internal Streamlit shadows/backgrounds */
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        background-color: transparent !important;
         border: none !important;
-        width: 32px !important;
-        height: 32px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        z-index: 10 !important;
     }
 
-    /* Inject a pure mic icon */
-    div[data-testid="stAudioInput"] button:first-child {
-        display: block !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z'/%3E%3C/svg%3E") !important;
+    div[data-testid="stTextInput"] input {
+        color: #e9edef !important;
+        font-size: 16px !important;
+    }
+
+    /* Green Mic Button */
+    div[data-testid="stAudioInput"] button {
+        border-radius: 50% !important;
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        background-color: #00a884 !important; 
+        color: white !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' width='28px' height='28px'%3E%3Cpath d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z'/%3E%3Cpath d='M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z'/%3E%3C/svg%3E") !important;
         background-repeat: no-repeat !important;
         background-position: center !important;
-        background-size: 18px 18px !important;
-        position: absolute !important;
-        left: 5px !important;
-        top: 5px !important;
+        background-size: 26px 26px !important;
+        color: transparent !important;
     }
 
-    /* Hide the second/third buttons (Clear, Stop, etc) */
-    div[data-testid="stAudioInput"] button:nth-child(n+2) {
+    /* Hide other Streamlit elements in mic area */
+    div[data-testid="stAudioInput"] label,
+    div[data-testid="stAudioInput"] svg,
+    div[data-testid="stAudioInput"] [role="toolbar"],
+    div[data-testid="stAudioInput"] [class*="Waveform"] {
         display: none !important;
-        width: 0 !important;
-        height: 0 !important;
-    }
-
-    /* Hide ALL native SVGs so they don't overlay weird artifacts (like brackets/teardrops) */
-    div[data-testid="stAudioInput"] svg {
-        display: none !important;
-    }
-
-    /* Tidy up the horizontal flex gap to make the circle button sit tightly next to the input */
-    div[data-testid="stHorizontalBlock"] {
-        align-items: center !important;
-        gap: 0.5rem !important;
-    }
-
-    /* Interactive Link Cards */
-    .link-card {
-        text-decoration: none !important;
-        display: block;
-        transition: all 0.3s ease;
-    }
-    .link-card:hover {
-        transform: translateY(-5px);
-        filter: brightness(1.2);
-    }
-    .link-card .metric-card {
-        cursor: pointer;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .link-card .metric-card:hover {
-        border-color: rgba(99, 102, 241, 0.5);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
-    }
-    
-    .action-link {
-        color: #6366f1;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-top: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-    .action-link::after {
-        content: ' ↗';
     }
 </style>
+
+
+
+
+
 """, unsafe_allow_html=True)
 
 # =====================================================
@@ -391,7 +320,7 @@ with st.sidebar:
     st.markdown("""
     <div style="text-align: center; margin-bottom: 2rem;">
         <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" width="80" style="filter: hue-rotate(240deg) brightness(1.2);">
-        <h2 style="color: #f8fafc; margin-top: 1rem;">Wellness AI</h2>
+        <h2 style="color: #f8fafc; margin-top: 1rem;">LYKA AI</h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -401,7 +330,8 @@ with st.sidebar:
         "Choose your experience:",
         ["Wholesome Conversation", "Therapy Recommendations"],
         index=0,
-        help="Switch between chat-focused or recommendation-focused views."
+        help="Switch between chat-focused or recommendation-focused views.",
+        key="interaction_mode"
     )
     
     st.markdown("---")
@@ -425,7 +355,7 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.caption("© 2026 Adaptive AI Deployment")
+    st.caption("© 2026 LYKA AI")
 
     # Sidebar Wellness Panel (Always shows latest results)
     if "latest_analysis" in st.session_state and st.session_state.latest_analysis:
@@ -459,7 +389,8 @@ with st.sidebar:
 def render_chat_interface():
     """Renders the WhatsApp-style split chat UI"""
     
-    st.markdown('<div style="margin-bottom: 60px;">', unsafe_allow_html=True) # Spacer
+    # Add a spacer at the bottom of the chat to make room for the fixed input bar
+    st.markdown('<div style="margin-bottom: 80px;"></div>', unsafe_allow_html=True)
     
     # Display Chat History with Custom Bubbles
     for message in st.session_state.messages:
@@ -483,39 +414,51 @@ def render_chat_interface():
             </div>
             """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Use a custom inline container at the bottom instead of st.chat_input
-    # so we can render text alongside the microphone
+    # WhatsApp-style Bottom Input Bar
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    
     user_input = None
     
-    # Custom interaction row
-    st.markdown("---")
+    # Simple Layout: [ Dark Bar Input ] [ Mic Circle ]
+    col_input, col_mic = st.columns([6, 1])
     
-    # Use tighter column ratios so the button sits right at the end of the input (WhatsApp style)
-    input_c1, input_c2 = st.columns([12, 1])
-    
-    with input_c1:
-        # Create a form so hitting 'Enter' submits easily
-        with st.form(key='chat_form', clear_on_submit=True):
-            form_c1, form_c2 = st.columns([6, 1])
-            with form_c1:
-                text_val = st.text_input("msg", placeholder="Message...", label_visibility="collapsed")
-            with form_c2:
-                # The send button (styled via CSS to be a circle)
-                submitted = st.form_submit_button("➤")
-                
-            if submitted and text_val:
-                user_input = text_val
-                
-    with input_c2:
-        # Render the audio input widget directly next to the chat bar
-        chat_audio = st.audio_input("Record", label_visibility="collapsed", key="chat_inline_mic")
+    with col_input:
+        # Define callback to handle text submission and clear input
+        def on_msg_submit():
+            if st.session_state.temp_chat_input:
+                st.session_state.chat_input_final = st.session_state.temp_chat_input
+                st.session_state.temp_chat_input = "" # Clear it
+
+        # Single text input with no label, acting as the bar itself
+        st.text_input(
+            "Message",
+            key="temp_chat_input",
+            placeholder="Message",
+            label_visibility="collapsed",
+            on_change=on_msg_submit
+        )
         
-        # WhatsApp-like auto-processing when mic recording is complete
+        # Check if we have a final submission from the callback
+        if st.session_state.get("chat_input_final"):
+            user_input = st.session_state.chat_input_final
+            st.session_state.chat_input_final = None # Reset for next turn
+
+    with col_mic:
+        # Mic logic with dynamic reset
+        if "mic_reset_counter" not in st.session_state:
+            st.session_state.mic_reset_counter = 0
+
+        chat_audio = st.audio_input(
+            "Record", 
+            label_visibility="collapsed", 
+            key=f"chat_mic_final_{st.session_state.mic_reset_counter}"
+        )
+        
         if chat_audio and chat_audio != st.session_state.get("last_chat_audio"):
             st.session_state.last_chat_audio = chat_audio
-            user_input = {"audio_bytes": chat_audio}
+            st.session_state.pending_audio = chat_audio
+            st.session_state.mic_reset_counter += 1
+            st.rerun()
             
     return user_input
 
@@ -531,8 +474,8 @@ def render_therapy_interface():
     </div>
     """, unsafe_allow_html=True)
 
-    # Input Row (Text Only) - Reusing the accessible layout
-    col1, col2 = st.columns([6, 1])
+    # Input Row (Text & Voice)
+    col1, col_mic, col_btn = st.columns([4, 1, 1.2])
     with col1:
         def submit_therapy_text():
             st.session_state.prompt_input = st.session_state.therapy_input
@@ -545,7 +488,16 @@ def render_therapy_interface():
             label_visibility="collapsed",
             placeholder="I'm feeling..."
         )
-    with col2:
+    
+    with col_mic:
+        therapy_audio = st.audio_input("Record", label_visibility="collapsed", key=f"therapy_mic_{st.session_state.get('mic_reset_counter', 0)}")
+        if therapy_audio and therapy_audio != st.session_state.get("last_therapy_audio"):
+            st.session_state.last_therapy_audio = therapy_audio
+            st.session_state.pending_audio = therapy_audio
+            st.session_state.mic_reset_counter = st.session_state.get('mic_reset_counter', 0) + 1
+            st.rerun()
+
+    with col_btn:
         if st.button("Analyze", use_container_width=True):
             submit_therapy_text()
 
@@ -741,9 +693,9 @@ def render_therapy_interface():
 
 # Title Section
 st.markdown("""
-<div style="text-align: center; margin-bottom: 2rem;">
-    <h1 style="font-size: 3rem; margin-bottom: 0.5rem; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Your Mental Wellness Friend</h1>
-    <p style="font-size: 1.1rem; color: #94a3b8;">I'm here to listen, support, and help you feel better. Let's talk! 💙</p>
+<div style="text-align: center; margin-bottom: 3rem; padding: 0 1rem;">
+    <h1 style="font-size: 3.8rem; margin-bottom: 1rem; font-weight: 800; line-height: 1.1; background: linear-gradient(to right, #a5b4fc, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LYKA AI</h1>
+    <p style="font-size: 1.25rem; color: #94a3b8; max-width: 700px; margin: 0 auto;">I'm here to listen, support, and help you find peace. Every conversation is a step toward feeling better. 💙</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -767,6 +719,11 @@ else:
 
 # Prompt Handling Logic
 prompt = None
+
+# Check for persistent audio from a previous reset
+if st.session_state.get("pending_audio"):
+    chat_input_value = {"audio_bytes": st.session_state.pending_audio}
+    st.session_state.pending_audio = None
 
 # 1. Text Input via custom chat column (High Priority)
 if chat_input_value:

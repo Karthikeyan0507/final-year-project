@@ -26,6 +26,7 @@ except (ImportError, AttributeError) as e:
     print(f"MediaPipe Solutions not available: {e}")
     HAS_MEDIAPIPE = False
 
+
 def calculate_ear(landmarks, indices):
     """Calculates Eye Aspect Ratio (EAR) for a given eye."""
     # Vertical distances
