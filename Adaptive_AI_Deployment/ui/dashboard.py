@@ -3,12 +3,14 @@ import os
 import time
 import streamlit as st
 import requests
+from datetime import datetime
 
 # =====================================================
 # PROJECT PATH FIX
 # =====================================================
 import uuid
 import json
+import streamlit.components.v1 as components
 
 # =====================================================
 # PROJECT PATH FIX
@@ -49,278 +51,720 @@ st.set_page_config(
     page_title="LYKA AI",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Start collapsed; user opens via hamburger button
 )
 
 # =====================================================
-# CUSTOM CSS (Glassmorphism & Modern UI)
+# CUSTOM CSS
 # =====================================================
 st.markdown("""
 <style>
-    /* Global Styles */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+    /* ============================================================
+       LYKA AI - Premium Dark Theme  (Single source of truth CSS)
+       ============================================================ */
+
+    /* 1. Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+    /* 2. Root variables */
+    :root {
+        --bg-deep:      #080c14;
+        --bg-mid:       #0d1424;
+        --bg-surface:   #111827;
+        --bg-elevated:  #1a2236;
+        --border:       rgba(255,255,255,0.07);
+        --border-glow:  rgba(139,92,246,0.35);
+        --accent:       #7c3aed;
+        --accent-2:     #6366f1;
+        --accent-soft:  rgba(124,58,237,0.15);
+        --user-bubble:  #0e4d3d;
+        --ai-bubble:    #161f2e;
+        --text-primary: #f1f5f9;
+        --text-muted:   #8b9bb4;
+        --text-dim:     #475569;
+    }
+
+    /* 3. Global */
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Outfit', sans-serif !important;
+        -webkit-font-smoothing: antialiased;
     }
 
-    /* Background with premium Midnight Serenity animated gradient */
+    /* 4. App background — deep animated nebula */
     .stApp {
-        background: linear-gradient(-45deg, #020617, #1e1b4b, #312e81, #5b21b6);
-        background-size: 400% 400%;
-        animation: gradient 20s ease infinite;
+        background: linear-gradient(135deg, #060b18 0%, #0d1424 40%, #130d2e 70%, #080c14 100%) !important;
+        background-attachment: fixed !important;
     }
 
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    /* Subtle star-field shimmer overlay */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+            radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 100%),
+            radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.08) 0%, transparent 100%),
+            radial-gradient(1px 1px at 50% 80%, rgba(255,255,255,0.06) 0%, transparent 100%);
+        pointer-events: none;
+        z-index: 0;
     }
 
-    /* Glassmorphism Containers - Improved for Serenity */
-    .glass-container {
-        background: rgba(15, 23, 42, 0.3);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 2.2rem;
-        margin-bottom: 2rem;
+    /* 5. Main block */
+    .block-container {
+        padding: 1rem 0.5rem 160px 0.5rem !important;
+        max-width: 100% !important;
     }
 
-    /* Section Headers */
-    h1, h2, h3 {
-        color: #f8fafc;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        line-height: 1.2;
+    /* 6. Hide Streamlit chrome */
+    #MainMenu, header, footer { visibility: hidden !important; }
+    .stDeployButton { display: none !important; }
+
+    /* ---- SIDEBAR ---- */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0d1424 0%, #111827 100%) !important;
+        border-right: 1px solid var(--border) !important;
     }
-    
-    h1 {
-        letter-spacing: -0.02em;
-    }
-    
-    p, label {
-        color: #94a3b8;
-        font-weight: 400;
-        line-height: 1.6;
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 0 !important;
     }
 
-    /* Input Area */
-    .stTextArea textarea {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1rem;
-        font-size: 1rem;
-        color: #f8fafc;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .stTextArea textarea:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-    }
-
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
-        color: white;
-        border: none;
-        padding: 0.8rem 2rem;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        width: 100%;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
-        border-color: transparent;
-    }
-
-    /* Result Cards - Enhanced Visual Depth */
-    .metric-card {
-        background: rgba(30, 41, 59, 0.5);
-        border-radius: 20px;
-        padding: 1.8rem;
+    /* Sidebar brand strip */
+    .sidebar-brand {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        padding: 1.8rem 1.2rem 1.4rem;
         text-align: center;
-        box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(8px);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        margin: -1rem -1rem 1.5rem;
+        border-radius: 0 0 20px 20px;
     }
-    .metric-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        background: rgba(30, 41, 59, 0.7);
-        border-color: #818cf8;
-        box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.3);
-    }
-    .metric-label {
-        color: #94a3b8;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        letter-spacing: 0.05em;
-    }
-    .metric-value {
-        color: #f8fafc;
-        font-size: 1.6rem;
+    .sidebar-brand h2 {
+        color: #fff !important;
+        margin: 0.6rem 0 0;
+        font-size: 1.5rem;
         font-weight: 800;
-        letter-spacing: -0.01em;
+        letter-spacing: 0.03em;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
 
-    /* Therapy Recommendation */
-    .therapy-box {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        padding: 2.5rem;
-        border-radius: 24px;
-        text-align: center;
-        color: #f8fafc;
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-        margin-top: 1.5rem;
-        animation: fadeIn 1s ease-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .therapy-title {
-        font-size: 1.1rem;
-        color: #6366f1;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 700;
-    }
-    .therapy-content {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #f8fafc;
-    }
-    
-    /* Footer */
-    .footer {
-        text-align: center;
-        margin-top: 4rem;
-        color: #475569;
+    /* Sidebar text & labels */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] .stMarkdown p {
+        color: var(--text-muted) !important;
         font-size: 0.9rem;
     }
+    [data-testid="stSidebar"] h3 {
+        color: var(--text-primary) !important;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
 
-    /* WhatsApp Style Chat Bubbles */
+    /* Sidebar radio buttons */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.3rem;
+        display: block;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-muted) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--text-primary) !important;
+    }
+
+    /* Sidebar button */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent;
+        border: 1px solid rgba(239,68,68,0.3);
+        color: #f87171;
+        border-radius: 12px;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(239,68,68,0.1);
+        border-color: #f87171;
+        color: #fca5a5;
+    }
+
+    /* Sidebar divider */
+    hr { border-color: var(--border) !important; }
+
+    /* ---- PAGE TITLE ---- */
+    .page-title {
+        text-align: center;
+        padding: 1.2rem 1rem 2rem;
+        animation: fadeSlideIn 0.6s ease;
+    }
+    .page-title h1 {
+        font-size: 3.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #c084fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0 0 0.6rem;
+        line-height: 1.1;
+        text-shadow: none;
+    }
+    .page-title p {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        font-weight: 400;
+    }
+
+    /* ---- CHAT HEADER (pinned) ---- */
+    .chat-header {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 62px;
+        background: rgba(13, 20, 36, 0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 1.5rem;
+        z-index: 1001;
+    }
+    .chat-header-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        margin-right: 12px;
+        object-fit: cover;
+    }
+    .chat-header-name {
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+    .chat-header-status {
+        color: #34d399;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .chat-header-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 1.2rem;
+        color: var(--text-muted);
+        font-size: 1.15rem;
+        cursor: pointer;
+    }
+
+    /* ---- CHAT MESSAGES ---- */
     .chat-row {
         display: flex;
         width: 100%;
-        margin-bottom: 1rem;
+        margin-bottom: 10px;
+        animation: messagePop 0.25s ease;
     }
-    .user-row {
-        justify-content: flex-end;
-    }
-    .ai-row {
-        justify-content: flex-start;
-    }
+    .user-row  { justify-content: flex-end;   }
+    .ai-row    { justify-content: flex-start;  }
+
     .chat-bubble {
-        padding: 12px 18px;
-        border-radius: 18px;
-        max-width: 75%;
-        color: #f1f5f9;
-        font-size: 1.05rem;
-        line-height: 1.55;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        padding: 8px 12px;
+        border-radius: 12px;
+        max-width: 85%;
+        color: var(--text-primary);
+        font-size: 0.98rem;
+        line-height: 1.6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        position: relative;
     }
     .user-bubble {
-        background-color: #005c4b; /* WhatsApp Dark Green */
-        border-top-right-radius: 0;
-        text-align: left; /* Text inside is typically left aligned even if bubble is right */
+        background: #005c4b; /* WhatsApp dark sent color */
+        border-top-right-radius: 0px;
+    }
+    .user-bubble::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 10px 10px 0 0;
+        border-color: #005c4b transparent transparent transparent;
     }
     .ai-bubble {
-        background-color: #202c33; /* WhatsApp Dark Grey */
-        border-top-left-radius: 0;
+        background: #202c33; /* WhatsApp dark received color */
+        border-top-left-radius: 0px;
+    }
+    .ai-bubble::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 10px 10px 0;
+        border-color: transparent #202c33 transparent transparent;
+    }
+    .bubble-timestamp {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.6);
+        float: right;
+        margin: 4px 0 0 8px;
+        clear: right;
+    }
+    .tick-mark {
+        color: #53bdeb; /* WhatsApp blue ticks */
+        margin-left: 2px;
+        font-size: 0.75rem;
     }
 
-    /* --- WhatsApp Style UI Integration --- */
-    
-    /* Force transparency on the layout containers to remove the white 'card' boxes */
-    div[data-testid="stHorizontalBlock"]:has(input[placeholder="Message"]), 
-    div[data-testid="stColumn"], 
+    /* ---- TYPING INDICATOR ---- */
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 12px 16px;
+    }
+    .typing-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: typingBounce 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+        0%, 80%, 100% { transform: translateY(0) scale(0.75); opacity: 0.5; }
+        40%           { transform: translateY(-6px) scale(1); opacity: 1; }
+    }
+
+    /* Old .chat-input-bar CSS removed */
+
+    /* Transparent text input inside bar */
+    div[data-testid="stTextInput"] {
+        flex-grow: 1 !important;
+    }
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stTextInput"] input {
+        background: transparent !important;
+        color: var(--text-primary) !important;
+        border: none !important;
+        font-size: 1rem !important;
+        font-family: 'Outfit', sans-serif !important;
+    }
+    div[data-testid="stTextInput"] input::placeholder {
+        color: var(--text-dim) !important;
+    }
+
+    /* Mic / Audio button */
+    div[data-testid="stAudioInput"] button {
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        background: var(--accent) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(124,58,237,0.4) !important;
+        transition: all 0.2s ease !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' width='20px' height='20px'%3E%3Cpath d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z'/%3E%3Cpath d='M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 20px !important;
+        color: transparent !important;
+    }
+    div[data-testid="stAudioInput"] button:hover {
+        background-color: #6d28d9 !important;
+        box-shadow: 0 6px 18px rgba(124,58,237,0.55) !important;
+    }
+    div[data-testid="stAudioInput"] button[aria-label*="Stop"],
+    div[data-testid="stAudioInput"] button[data-testid="stAudioInputStopButton"] {
+        background-color: #dc2626 !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Crect x='6' y='6' width='12' height='12'/%3E%3C/svg%3E") !important;
+        box-shadow: 0 4px 12px rgba(220,38,38,0.5) !important;
+    }
+    div[data-testid="stAudioInput"] label,
+    div[data-testid="stAudioInput"] [role="toolbar"],
+    div[data-testid="stAudioInput"] [class*="Waveform"],
+    div[data-testid="stAudioInput"] span,
+    div[data-testid="stAudioInput"] [data-testid="stMarkdownContainer"] {
+        display: none !important;
+    }
+
+    /* Strip white card backgrounds from column wrappers */
+    div[data-testid="stHorizontalBlock"],
+    div[data-testid="stColumn"],
     div[class*="stElementContainer"] {
-        background-color: transparent !important;
         background: transparent !important;
         box-shadow: none !important;
     }
 
-    /* Style the dark rounded bar for the message input */
-    div[data-testid="stTextInput"] {
-        background-color: #2a3942 !important; 
-        border-radius: 25px !important;
-        padding: 0 15px !important;
-        height: 50px !important;
-        display: flex !important;
-        align-items: center !important;
+    /* ---- METRIC / RECOMMENDATION CARDS ---- */
+    .metric-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 1.4rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent);
+        box-shadow: 0 12px 30px rgba(124,58,237,0.2);
+    }
+    .metric-label {
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.5rem;
+    }
+    .metric-value {
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+    .link-card { text-decoration: none !important; }
+    .action-link {
+        font-size: 0.75rem;
+        color: var(--accent-2);
+        margin-top: 0.5rem;
+        font-weight: 500;
     }
 
-    /* Hide internal Streamlit shadows/backgrounds */
+    /* ---- THERAPY BOX ---- */
+    .therapy-box {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-mid) 100%);
+        border: 1px solid rgba(99,102,241,0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-primary);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+        animation: fadeSlideIn 0.5s ease;
+    }
+
+    /* ---- GLOBAL BUTTONS ---- */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 600;
+        font-family: 'Outfit', sans-serif;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(124,58,237,0.5);
+    }
+
+    /* ---- FORMS & EXPANDERS ---- */
+    [data-testid="stExpander"] {
+        background: var(--bg-elevated) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 14px !important;
+    }
+    [data-testid="stExpander"] summary {
+        color: var(--text-muted) !important;
+    }
+    .stSpinner > div {
+        border-top-color: var(--accent) !important;
+    }
+
+    /* ---- TOAST ---- */
+    [data-testid="stToast"] {
+        background: var(--bg-elevated) !important;
+        border: 1px solid var(--border-glow) !important;
+        color: var(--text-primary) !important;
+        border-radius: 14px !important;
+    }
+
+    /* ---- WELLNESS SIDEBAR CARD ---- */
+    .wellness-card {
+        background: var(--accent-soft);
+        border: 1px solid rgba(124,58,237,0.25);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    .wellness-label {
+        font-size: 0.7rem;
+        color: #a78bfa;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.3rem;
+    }
+    .wellness-value {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    /* ---- HAMBURGER sidebar toggle button ---- */
+    #lyka-menu-btn {
+        position: fixed;
+        top: 14px;
+        left: 16px;
+        z-index: 1100;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(124,58,237,0.2);
+        border: 1px solid var(--border-glow);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.22s ease;
+        padding: 0;
+        backdrop-filter: blur(10px);
+    }
+    #lyka-menu-btn:hover {
+        background: rgba(124,58,237,0.45);
+        transform: scale(1.08);
+        border-color: var(--accent);
+    }
+    .hb-line {
+        width: 18px;
+        height: 2px;
+        background: #a78bfa;
+        border-radius: 2px;
+        transition: all 0.22s ease;
+    }
+    #lyka-menu-btn.open .hb-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    #lyka-menu-btn.open .hb-line:nth-child(2) { opacity: 0; }
+    #lyka-menu-btn.open .hb-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Push chat header right to not overlap hamburger */
+    .chat-header { padding-left: 64px !important; }
+
+    /* ---- USER MESSAGE SEND ANIMATION ---- */
+    @keyframes flyToRight {
+        0%   { opacity: 0; transform: translateX(-40px) translateY(30px) scale(0.88); }
+        55%  { opacity: 1; transform: translateX(8px) translateY(-4px) scale(1.02); }
+        100% { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+    }
+    .user-row.new-msg .chat-bubble {
+        animation: flyToRight 0.38s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+    /* Standard pop for all other messages */
+    .chat-row { animation: messagePop 0.25s ease; }
+
+    /* ---- ENHANCED INPUT BOX (CSS Anchor Hack) ---- */
+    div[data-testid="stVerticalBlock"]:has(.input-bottom-anchor):not(:has(div[data-testid="stVerticalBlock"] .input-bottom-anchor)) {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 95%;
+        max-width: 1200px;
+        background: rgba(15, 20, 35, 0.96);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        border: 1.5px solid rgba(139,92,246,0.28);
+        border-radius: 36px;
+        padding: 4px 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 1000;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(124,58,237,0.08);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    div[data-testid="stVerticalBlock"]:has(.input-bottom-anchor):not(:has(div[data-testid="stVerticalBlock"] .input-bottom-anchor)):focus-within {
+        border-color: rgba(139,92,246,0.6);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 3px rgba(124,58,237,0.12);
+    }
+
+    /* Maintain correct layout of horizontal block inside our hacked fixed container */
+    div[data-testid="stVerticalBlock"]:has(.input-bottom-anchor):not(:has(div[data-testid="stVerticalBlock"] .input-bottom-anchor)) > div[data-testid="stHorizontalBlock"] {
+        gap: 0 !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Input field */
+    div[data-testid="stTextInput"] {
+        flex-grow: 1 !important;
+    }
     div[data-testid="stTextInput"] div[data-baseweb="input"] {
-        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stTextInput"] input {
+        background: transparent !important;
+        color: var(--text-primary) !important;
+        border: none !important;
+        font-size: 1rem !important;
+        font-family: 'Outfit', sans-serif !important;
+        padding: 6px 0 !important;
+        caret-color: var(--accent);
+    }
+    div[data-testid="stTextInput"] input:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stTextInput"] input::placeholder {
+        color: var(--text-dim) !important;
+        font-style: italic;
+    }
+
+    /* Hide focus ring on the wrapper */
+    div[data-testid="stTextInput"] [data-baseweb="input"]:focus-within {
+        box-shadow: none !important;
         border: none !important;
     }
 
-    div[data-testid="stTextInput"] input {
-        color: #e9edef !important;
-        font-size: 16px !important;
-    }
-
-    /* Green Mic Button */
-    div[data-testid="stAudioInput"] button {
-        border-radius: 50% !important;
-        width: 52px !important;
-        height: 52px !important;
-        min-width: 52px !important;
-        background-color: #00a884 !important; 
-        color: white !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' width='28px' height='28px'%3E%3Cpath d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z'/%3E%3Cpath d='M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-position: center !important;
-        background-size: 26px 26px !important;
-        color: transparent !important;
-    }
-
-    /* Hide other Streamlit elements in mic area */
-    div[data-testid="stAudioInput"] label,
-    div[data-testid="stAudioInput"] svg,
-    div[data-testid="stAudioInput"] [role="toolbar"],
-    div[data-testid="stAudioInput"] [class*="Waveform"] {
-        display: none !important;
-    }
 </style>
-
-
-
-
-
 """, unsafe_allow_html=True)
+
+# =====================================================
+# HAMBURGER TOGGLE + THINKING INDICATOR JS
+# =====================================================
+components.html("""
+<script>
+(function() {
+
+    var sidebarOpen = false;
+
+    function getSidebar() {
+        return window.parent.document.querySelector('[data-testid="stSidebar"]');
+    }
+
+    function openSidebar(sidebar) {
+        sidebar.style.setProperty('display', 'block', 'important');
+        void sidebar.offsetWidth; // Force Reflow
+        sidebar.style.setProperty('transform', 'translateX(0)', 'important');
+        sidebar.style.setProperty('width', '21rem', 'important');
+        sidebar.style.setProperty('min-width', '21rem', 'important');
+        sidebar.style.setProperty('visibility', 'visible', 'important');
+        sidebar.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s';
+        sidebarOpen = true;
+    }
+
+    function closeSidebar(sidebar) {
+        sidebar.style.setProperty('transform', 'translateX(-150%)', 'important');
+        sidebar.style.setProperty('width', '0', 'important');
+        sidebar.style.setProperty('min-width', '0', 'important');
+        sidebar.style.setProperty('visibility', 'hidden', 'important');
+        sidebar.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s';
+        setTimeout(function() {
+            if (!sidebarOpen) {
+                sidebar.style.setProperty('display', 'none', 'important');
+            }
+        }, 300);
+        sidebarOpen = false;
+    }
+
+    // 1. Inject hamburger button
+    var btn = document.createElement('button');
+    btn.id    = 'lyka-menu-btn';
+    btn.title = 'Toggle menu';
+    btn.innerHTML = '<div class="hb-line"></div><div class="hb-line"></div><div class="hb-line"></div>';
+
+    var inject = function() {
+        var app = window.parent.document.querySelector('.stApp');
+        if (!app) { setTimeout(inject, 250); return; }
+
+        if (!window.parent.document.getElementById('lyka-menu-btn')) {
+            app.appendChild(btn);
+        }
+
+        // Ensure sidebar starts hidden
+        var sidebar = getSidebar();
+        if (sidebar) {
+            sidebar.style.transition = 'none';
+            sidebar.style.setProperty('transform', 'translateX(-150%)', 'important');
+            sidebar.style.setProperty('width', '0', 'important');
+            sidebar.style.setProperty('min-width', '0', 'important');
+            sidebar.style.setProperty('visibility', 'hidden', 'important');
+            sidebar.style.setProperty('display', 'none', 'important');
+            
+            // Inject close button into sidebar
+            if (!window.parent.document.getElementById('lyka-close-btn')) {
+                var closeBtn = document.createElement('div');
+                closeBtn.id = 'lyka-close-btn';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.style.cssText = 'position: absolute; top: 12px; right: 20px; font-size: 32px; color: #f87171; cursor: pointer; z-index: 10000; line-height: 1; transition: transform 0.2s ease; font-family: sans-serif; font-weight: bold;';
+                closeBtn.onmouseover = function() { this.style.transform = 'scale(1.2)'; };
+                closeBtn.onmouseout = function() { this.style.transform = 'scale(1)'; };
+                closeBtn.onclick = function() {
+                    var sb = getSidebar();
+                    closeSidebar(sb);
+                    btn.classList.remove('open');
+                };
+                sidebar.appendChild(closeBtn);
+            }
+        }
+
+        btn.addEventListener('click', function() {
+            var sb = getSidebar();
+            if (!sb) return;
+            if (!sidebarOpen) {
+                openSidebar(sb);
+                btn.classList.add('open');
+            } else {
+                closeSidebar(sb);
+                btn.classList.remove('open');
+            }
+        });
+
+        // Close sidebar if user clicks OUTSIDE it
+        window.parent.document.addEventListener('click', function(e) {
+            if (!sidebarOpen) return;
+            var sb = getSidebar();
+            var b  = window.parent.document.getElementById('lyka-menu-btn');
+            if (sb && !sb.contains(e.target) && b && !b.contains(e.target)) {
+                closeSidebar(sb);
+                btn.classList.remove('open');
+            }
+        });
+    };
+    inject();
+
+})();
+</script>
+""", height=0)
 
 # =====================================================
 # SIDEBAR
 # =====================================================
 with st.sidebar:
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 2rem;">
-        <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" width="80" style="filter: hue-rotate(240deg) brightness(1.2);">
-        <h2 style="color: #f8fafc; margin-top: 1rem;">LYKA AI</h2>
+    <div class="sidebar-brand">
+        <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" width="60" style="filter: brightness(1.3) drop-shadow(0 2px 8px rgba(0,0,0,0.4));">
+        <h2>LYKA AI</h2>
+        <p style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin: 0;">Your AI Companion</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -383,84 +827,131 @@ with st.sidebar:
 # =====================================================
 
 # =====================================================
+# CALLBACKS (Session State Fix)
+# =====================================================
+
+def handle_chat_input():
+    if st.session_state.chat_input:
+        st.session_state.temp_chat_value = st.session_state.chat_input
+        st.session_state.chat_input = "" # Clear the widget
+        if "staged_text" in st.session_state:
+            st.session_state.staged_text = "" # Clear staged emoji text
+
+def handle_therapy_input():
+    if st.session_state.therapy_input:
+        st.session_state.temp_therapy_value = st.session_state.therapy_input
+        st.session_state.therapy_input = "" # Clear the widget
+
+# =====================================================
 # RENDER FUNCTIONS
 # =====================================================
 
 def render_chat_interface():
     """Renders the WhatsApp-style split chat UI"""
     
-    # Add a spacer at the bottom of the chat to make room for the fixed input bar
-    st.markdown('<div style="margin-bottom: 80px;"></div>', unsafe_allow_html=True)
+    # WhatsApp Header (Pinned)
+    st.markdown(f"""
+    <div class="chat-header">
+        <img class="chat-header-avatar" src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png">
+        <div>
+            <div class="chat-header-name">LYKA AI</div>
+            <div class="chat-header-status">online</div>
+        </div>
+        <div class="chat-header-actions">
+            <span title="Voice Call">📞</span>
+            <span title="Video Call">📹</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Add a spacer at the top for the header
+    st.markdown('<div style="margin-top: 60px;"></div>', unsafe_allow_html=True)
     
-    # Display Chat History with Custom Bubbles
-    for message in st.session_state.messages:
+    # ---------- Message History ----------
+    total = len(st.session_state.messages)
+    for i, message in enumerate(st.session_state.messages):
         role = message["role"]
         content = message["content"]
-        
+        time_str = message.get("time", datetime.now().strftime("%I:%M %p"))
+        is_newest = (i == total - 1)
+
         if role == "user":
+            # User bubbles on the RIGHT — apply fly animation on newest message
+            extra_class = "new-msg" if is_newest else ""
             st.markdown(f"""
-            <div class="chat-row user-row">
+            <div class="chat-row user-row {extra_class}">
                 <div class="chat-bubble user-bubble">
                     {content}
+                    <div class="bubble-timestamp">{time_str} <span class="tick-mark">&#x2713;&#x2713;</span></div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.markdown(f"""
+            # AI bubbles on the LEFT
+            bubble_placeholder = st.empty()
+
+            if message.get("streaming") and is_newest:
+                # Word-by-word streaming
+                import time as _time
+                words = content.split(" ")
+                temp_text = ""
+                for word in words:
+                    temp_text += word + " "
+                    bubble_placeholder.markdown(f"""
+                    <div class="chat-row ai-row">
+                        <div class="chat-bubble ai-bubble">
+                            {temp_text}
+                            <div class="bubble-timestamp">{time_str}</div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    _time.sleep(0.04)
+                message["streaming"] = False
+
+            bubble_placeholder.markdown(f"""
             <div class="chat-row ai-row">
                 <div class="chat-bubble ai-bubble">
                     {content}
+                    <div class="bubble-timestamp">{time_str}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-    # WhatsApp-style Bottom Input Bar
-    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    
-    user_input = None
-    
-    # Simple Layout: [ Dark Bar Input ] [ Mic Circle ]
-    col_input, col_mic = st.columns([6, 1])
-    
-    with col_input:
-        # Define callback to handle text submission and clear input
-        def on_msg_submit():
-            if st.session_state.temp_chat_input:
-                st.session_state.chat_input_final = st.session_state.temp_chat_input
-                st.session_state.temp_chat_input = "" # Clear it
+    # Typing Indicator
+    if st.session_state.get("is_processing", False):
+        st.markdown(f"""
+        <div class="chat-row ai-row">
+            <div class="chat-bubble ai-bubble">
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Single text input with no label, acting as the bar itself
-        st.text_input(
-            "Message",
-            key="temp_chat_input",
-            placeholder="Message",
-            label_visibility="collapsed",
-            on_change=on_msg_submit
-        )
-        
-        # Check if we have a final submission from the callback
-        if st.session_state.get("chat_input_final"):
-            user_input = st.session_state.chat_input_final
-            st.session_state.chat_input_final = None # Reset for next turn
+    # Add a spacer at the bottom of the chat to make room for the fixed input bar
+    st.markdown('<div style="min-height: 150px; width: 100%; display: block; color: transparent;">&nbsp;</div>', unsafe_allow_html=True)
 
-    with col_mic:
-        # Mic logic with dynamic reset
-        if "mic_reset_counter" not in st.session_state:
-            st.session_state.mic_reset_counter = 0
+    # Input Bar
+    if st.session_state.get("is_processing", False):
+        st.markdown('<div style="position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:62%;text-align:center;color:var(--text-muted);font-size:0.85rem;z-index:999;">LYKA is thinking...</div>', unsafe_allow_html=True)
 
-        chat_audio = st.audio_input(
-            "Record", 
-            label_visibility="collapsed", 
-            key=f"chat_mic_final_{st.session_state.mic_reset_counter}"
-        )
-        
-        if chat_audio and chat_audio != st.session_state.get("last_chat_audio"):
-            st.session_state.last_chat_audio = chat_audio
-            st.session_state.pending_audio = chat_audio
-            st.session_state.mic_reset_counter += 1
-            st.rerun()
-            
-    return user_input
+    bottom_container = st.container()
+    with bottom_container:
+        st.markdown('<div class="input-bottom-anchor"></div>', unsafe_allow_html=True)
+        col_input, col_mic = st.columns([11, 1])
+    
+        with col_input:
+            st.text_input("Message", key="chat_input", on_change=handle_chat_input, label_visibility="collapsed", placeholder="Message LYKA...")
+    
+        with col_mic:
+            st.audio_input("Mic", key="chat_mic", label_visibility="collapsed")
+
+    components.html("<script>setTimeout(function() { window.parent.scrollTo({ top: window.parent.document.body.scrollHeight, behavior: 'smooth' }); }, 500);</script>", height=0)
+
+    return None
 
 def render_therapy_interface():
     """Renders the new Therapy Session Dashboard UI"""
@@ -474,37 +965,29 @@ def render_therapy_interface():
     </div>
     """, unsafe_allow_html=True)
 
-    # Input Row (Text & Voice)
-    col1, col_mic, col_btn = st.columns([4, 1, 1.2])
-    with col1:
-        def submit_therapy_text():
-            st.session_state.prompt_input = st.session_state.therapy_input
-            st.session_state.therapy_input = ""
-            
-        st.text_input(
-            "Share your thoughts...", 
-            key="therapy_input", 
-            on_change=submit_therapy_text,
-            label_visibility="collapsed",
-            placeholder="I'm feeling..."
-        )
+    # Input Section (WhatsApp Style)
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
     
-    with col_mic:
-        therapy_audio = st.audio_input("Record", label_visibility="collapsed", key=f"therapy_mic_{st.session_state.get('mic_reset_counter', 0)}")
-        if therapy_audio and therapy_audio != st.session_state.get("last_therapy_audio"):
-            st.session_state.last_therapy_audio = therapy_audio
-            st.session_state.pending_audio = therapy_audio
-            st.session_state.mic_reset_counter = st.session_state.get('mic_reset_counter', 0) + 1
-            st.rerun()
+    # ---------- Therapy Input Section ----------
+    st.markdown('<div style="min-height: 150px; width: 100%; display: block; color: transparent;">&nbsp;</div>', unsafe_allow_html=True)
+    bottom_container = st.container()
+    with bottom_container:
+        st.markdown('<div class="input-bottom-anchor"></div>', unsafe_allow_html=True)
+        col1, col2 = st.columns([10, 1])
 
-    with col_btn:
-        if st.button("Analyze", use_container_width=True):
-            submit_therapy_text()
+        with col1:
+            st.text_input("How are you feeling?", key="therapy_input", on_change=handle_therapy_input, label_visibility="collapsed", placeholder="Share your thoughts...")
+
+        with col2:
+            st.audio_input("Mic", key="therapy_mic", label_visibility="collapsed")
+
+    components.html("<script>setTimeout(function() { window.parent.scrollTo({ top: window.parent.document.body.scrollHeight, behavior: 'smooth' }); }, 500);</script>", height=0)
 
     if use_camera:
         st.caption("📷 Facial Analysis Active")
 
-    # Results Section - Only verify if we have a LATEST analysis that matches the current session interaction
+    # Results Section
+    # Only verify if we have a LATEST analysis that matches the current session interaction
     # For now, we just show the latest analysis if it exists
     if st.session_state.latest_analysis:
         data = st.session_state.latest_analysis
@@ -610,20 +1093,25 @@ def render_therapy_interface():
         # Therapy Strategy
         with r1_col2:
             therapy_item = data.get('therapy', 'N/A')
+            # Fix: If therapy_item is a dict, parse it correctly to avoid .replace crash
+            therapy_item_str = str(therapy_item.get('name', therapy_item)) if isinstance(therapy_item, dict) else str(therapy_item)
+            
             # Import THERAPY_DETAILS to get description
             from rl_engine.therapy_rl import THERAPY_DETAILS
-            details = THERAPY_DETAILS.get(therapy_item, {"description": "No detailed information available.", "link": "https://www.google.com/search?q=" + therapy_item.replace(' ', '+')})
+            details = THERAPY_DETAILS.get(therapy_item_str, {
+                "description": "No detailed information available.", 
+                "link": "https://www.google.com/search?q=" + therapy_item_str.replace(' ', '+')
+            })
             
             st.markdown(f"""
-            <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4);">
-                <div class="metric-label" style="color: #f472b6;">🧘 Therapy Strategy</div>
-                <div style="color: #f1f5f9; font-weight: 500; margin-bottom: 0.5rem;">{therapy_item}</div>
-            </div>
+            <a href="{details['link']}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4);">
+                    <div class="metric-label" style="color: #f472b6;">🧘 Therapy Strategy</div>
+                    <div style="color: #f1f5f9; font-weight: 500; margin-bottom: 0.5rem;">{therapy_item_str}</div>
+                    <div class="action-link">Learn More ↗</div>
+                </div>
+            </a>
             """, unsafe_allow_html=True)
-            
-            with st.expander("📖 View Therapy Details", expanded=False):
-                st.markdown(f"<p style='color: #e2e8f0;'>{details['description']}</p>", unsafe_allow_html=True)
-                st.markdown(f"<a href='{details['link']}' target='_blank' style='color: #6366f1; text-decoration: none;'>Learn More ↗</a>", unsafe_allow_html=True)
             
         # Row 2: Entertainment (Music, Movie, Game) with FEEDBACK
         r2_col1, r2_col2, r2_col3 = st.columns(3)
@@ -693,9 +1181,9 @@ def render_therapy_interface():
 
 # Title Section
 st.markdown("""
-<div style="text-align: center; margin-bottom: 3rem; padding: 0 1rem;">
-    <h1 style="font-size: 3.8rem; margin-bottom: 1rem; font-weight: 800; line-height: 1.1; background: linear-gradient(to right, #a5b4fc, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LYKA AI</h1>
-    <p style="font-size: 1.25rem; color: #94a3b8; max-width: 700px; margin: 0 auto;">I'm here to listen, support, and help you find peace. Every conversation is a step toward feeling better. 💙</p>
+<div class="page-title">
+    <h1>LYKA AI</h1>
+    <p>Your safe space to talk, reflect, and feel better. Every conversation is a step toward peace.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -705,32 +1193,47 @@ if "messages" not in st.session_state:
 if "latest_analysis" not in st.session_state:
     st.session_state.latest_analysis = {}
 
-# Render Interface based on Mode
-chat_input_value = None
+# 0. Render Interface based on Mode
 if interaction_mode == "Wholesome Conversation":
-    chat_input_value = render_chat_interface()
+    render_chat_interface()
 else:
     render_therapy_interface()
 
-
-# =====================================================
-# DATA PROCESSING (COMMON)
-# =====================================================
-
-# Prompt Handling Logic
+# 1. Check for inputs (from callbacks or audio)
 prompt = None
+if interaction_mode == "Wholesome Conversation":
+    # Chat Logic
+    if "temp_chat_value" in st.session_state and st.session_state.temp_chat_value:
+        prompt = st.session_state.temp_chat_value
+        st.session_state.temp_chat_value = ""
+    
+    # Check for direct audio input if available from the widget key (Streamlit 1.40+)
+    if "chat_mic" in st.session_state and st.session_state.chat_mic:
+        prompt = {"audio_bytes": st.session_state.chat_mic.read()}
+else:
+    # Therapy Logic
+    if "temp_therapy_value" in st.session_state and st.session_state.temp_therapy_value:
+        prompt = st.session_state.temp_therapy_value
+        st.session_state.temp_therapy_value = ""
+    
+    if "therapy_mic" in st.session_state and st.session_state.therapy_mic:
+        prompt = {"audio_bytes": st.session_state.therapy_mic.read()}
 
-# Check for persistent audio from a previous reset
-if st.session_state.get("pending_audio"):
-    chat_input_value = {"audio_bytes": st.session_state.pending_audio}
+# 2. Check for persistent audio from a previous reset
+if not prompt and st.session_state.get("pending_audio"):
+    prompt = {"audio_bytes": st.session_state.pending_audio}
     st.session_state.pending_audio = None
 
-# 1. Text Input via custom chat column (High Priority)
-if chat_input_value:
-    if isinstance(chat_input_value, dict) and "audio_bytes" in chat_input_value:
-        # Handle inline audio
-        audio_data = chat_input_value["audio_bytes"]
-        with st.spinner("Transcribing your voice..."):
+# Process Input if prompt exists
+if prompt:
+    st.session_state.is_processing = True
+    
+    # --- COMMON AUDIO TRANSCRIBE LOGIC ---
+    if isinstance(prompt, dict) and "audio_bytes" in prompt:
+        audio_data = prompt["audio_bytes"]
+        # We can keep the transcription spinner as it's a different message, 
+        # but the user might prefer consistency. For now, let's keep it brief.
+        with st.spinner("Transcribing..."):
             try:
                 files = {"file": ("audio.wav", audio_data, "audio/wav")}
                 transcribe_res = requests.post(f"{API_BASE_URL}/transcribe", files=files)
@@ -738,24 +1241,18 @@ if chat_input_value:
                     prompt = transcribe_res.json().get("text")
                 else:
                     st.error("Could not transcribe audio.")
+                    prompt = None
             except Exception as e:
                 st.error(f"Error during transcription: {e}")
-    else:
-        # Standard text
-        prompt = chat_input_value
+                prompt = None
 
-# 2. explicit text submission via other box (Therapy Mode)
-elif "prompt_input" in st.session_state and st.session_state.prompt_input:
-    prompt = st.session_state.prompt_input
-    st.session_state.prompt_input = None
-
-# Process Input if prompt exists
-if prompt:
-    # Add user message to history (for chat mode mostly, but good to keep record)
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Process with Backend
-    with st.spinner("🔄 Analying your state..."):
+    # Proceed if we have a valid text prompt (either from input or transcription)
+    if prompt:
+        now_str = datetime.now().strftime("%I:%M %p")
+        # Add user message to history with timestamp
+        st.session_state.messages.append({"role": "user", "content": prompt, "time": now_str})
+        
+        # Process with Backend
         try:
             # Prepare payload
             payload = {
@@ -763,7 +1260,6 @@ if prompt:
                 "use_camera": use_camera,
                 "session_id": st.session_state.user_session_id
             }
-            
             # Make API Request
             response = requests.post(API_URL, json=payload, timeout=45)
             
@@ -771,37 +1267,29 @@ if prompt:
                 data = response.json()
                 st.session_state.latest_analysis = data
                 
-                # Get the conversational response (new empathetic format)
+                # Get the conversational response
                 conversational_response = data.get("conversational_response")
                 
                 if conversational_response:
-                    
-                    # TTS Playback
-                    try:
-                        tts_response = requests.post(f"{API_BASE_URL}/tts", json={"text": conversational_response})
-                        if tts_response.status_code == 200:
-                            st.audio(tts_response.content, format="audio/mp3", autoplay=True)
-                    except Exception as e:
-                        print(f"TTS Error: {e}")
-
-                    # Add to history
                     st.session_state.messages.append({
-                        "role": "assistant", 
+                        "role": "assistant",
                         "content": conversational_response,
-                        "analysis": data
+                        "analysis": data,
+                        "streaming": True,
+                        "time": datetime.now().strftime("%I:%M %p")
                     })
-                    
                 else:
                     # Fallback
                     ai_response = f"I've analyzed your emotional state and detected a **{data.get('final_emotion', 'neutral')}** tone."
                     st.session_state.messages.append({
                         "role": "assistant", 
                         "content": ai_response,
-                        "analysis": data
+                        "analysis": data,
+                        "streaming": True
                     })
                 
-                # Rerun to update UI
-                st.rerun()
+                # Clear query params
+                st.query_params.clear()
                 
             else:
                 try:
@@ -815,6 +1303,12 @@ if prompt:
             st.error("🔌 Connection Error: Backend server is not accessible.")
         except Exception as e:
             st.error(f"⚠️ An unexpected error occurred: {str(e)}")
+        finally:
+            st.session_state.is_processing = False
+            # Ensure we don't carry over the prompt into the next run
+            if "temp_chat_value" in st.session_state:
+                st.session_state.temp_chat_value = ""
+            st.rerun()
 
 
 # =====================================================
