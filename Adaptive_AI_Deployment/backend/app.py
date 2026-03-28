@@ -12,16 +12,44 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from flask import Flask, request, jsonify
 from models.emotion_text import detect_text_emotion
 from models.emotion_face import detect_face_emotion
+from models.emotion_voice import detect_voice_emotion
 from models.empathetic_responder import generate_empathetic_response
 from models.conversation_context import get_session_memory
 from rl_engine.therapy_rl import choose_therapy, update_recommendation_model
 from backend.database import init_db, save_analysis, save_conversation_turn, get_conversation_history, get_previous_emotional_state, save_feedback
 import uuid
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests from Streamlit iframe
 
 # Initialize database on startup
 init_db()
+
+# ── In-memory audio bridge ──────────────────────────────────────────────────
+# Stores temporarily uploaded audio bytes keyed by session_id
+_pending_audio_store: dict = {}
+
+@app.route("/upload_audio", methods=["POST", "OPTIONS"])
+def upload_audio():
+    """Receives raw audio bytes POSTed by the embedded JS mic."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    session_id = request.args.get("session_id", "default")
+    _pending_audio_store[session_id] = request.data
+    return jsonify({"status": "ok"}), 200
+
+@app.route("/get_audio", methods=["GET"])
+def get_audio():
+    """Returns and clears the pending audio for a session."""
+    session_id = request.args.get("session_id", "default")
+    audio = _pending_audio_store.pop(session_id, None)
+    if audio:
+        import base64
+        return jsonify({"audio_b64": base64.b64encode(audio).decode("utf-8")})
+    return jsonify({"audio_b64": None})
+# ────────────────────────────────────────────────────────────────────────────
+
 
 # --- FEEDBACK ENDPOINT (RL) ---
 @app.route("/feedback", methods=["POST"])
@@ -63,6 +91,7 @@ def analyze():
         use_camera = data.get("use_camera", False)
         session_id = data.get("session_id", str(uuid.uuid4()))  # Generate if not provided
         emergency_contact = data.get("emergency_contact", None)
+        audio_data = data.get("audio_data", None)
 
         text_result = detect_text_emotion(text)
         text_emotion = text_result[0].get("label", "Neutral")
@@ -86,7 +115,18 @@ def analyze():
                 face_features = {}
                 feature_desc = "Camera error."
 
-        final_emotion = face_emotion if face_emotion != "Neutral" else text_emotion
+        # Check for voice emotion if audio data was provided
+        voice_emotion = "Neutral"
+        if audio_data:
+            voice_emotion = detect_voice_emotion(audio_data)
+
+        # Final emotion priority: Face > Voice > Text
+        if face_emotion != "Neutral":
+            final_emotion = face_emotion
+        elif voice_emotion != "Neutral":
+            final_emotion = voice_emotion
+        else:
+            final_emotion = text_emotion
         
         # --- EMOTION REFINEMENT LOGIC ---
         # Refine Face Emotion Labels
@@ -214,6 +254,28 @@ def analyze():
         
         ai_response = empathetic_response.get("conversational_response")
         
+        # Parse official emotion from LLM if provided in the strict format
+        if ai_response and "Emotion:" in ai_response:
+            try:
+                llm_lines = ai_response.split('\n')
+                parsed_emotion = None
+                parsed_message = None
+                
+                for line in llm_lines:
+                    if line.startswith("Emotion:"):
+                        trimmed_emotion = line.replace("Emotion:", "").strip()
+                        if trimmed_emotion in ["Happy", "Calm", "Neutral", "Sad", "Stressed", "Angry", "Anxious"]:
+                            parsed_emotion = trimmed_emotion
+                    elif line.startswith("Response:"):
+                        parsed_message = line.replace("Response:", "").strip()
+                
+                if parsed_emotion:
+                    final_emotion = parsed_emotion
+                if parsed_message:
+                    ai_response = parsed_message
+            except Exception as e:
+                print(f"Error parsing LLM emotion: {e}")
+        
         # Save conversation turn to memory and database
         session_memory.add_exchange(
             user_text=text,
@@ -243,6 +305,7 @@ def analyze():
             "session_id": session_id,  # Return session ID for client to maintain
             "text_emotion": refined_text_emotion,
             "face_emotion": refined_face_emotion,
+            "voice_emotion": voice_emotion,
             "final_declaration": final_declaration,
             "face_details": face_details,
             "processed_frame": processed_frame,

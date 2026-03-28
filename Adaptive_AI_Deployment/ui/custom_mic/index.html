@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Streamlit Custom Mic</title>
+    <!-- Streamlit Component Library -->
+    <script src="https://cdn.jsdelivr.net/npm/streamlit-component-lib@1.3.0/dist/streamlit.js"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #mic-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background-color: #7c3aed; /* LYKA primary accent */
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #mic-btn:hover {
+            background-color: #6d28d9;
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.55);
+            transform: scale(1.05);
+        }
+
+        #mic-btn.recording {
+            background-color: #dc2626; /* Red for recording */
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+            animation: pulse-recording 1.5s infinite;
+        }
+
+        #mic-btn.recording:hover {
+            background-color: #b91c1c;
+        }
+
+        @keyframes pulse-recording {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
+        .material-icons {
+            font-size: 24px;
+        }
+
+        /* Container to center vertically properly within Streamlit's iframe */
+        #container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <button id="mic-btn" title="Start Recording">
+            <span class="material-icons" id="mic-icon">mic</span>
+        </button>
+    </div>
+
+    <script>
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        const micBtn = document.getElementById("mic-btn");
+        const micIcon = document.getElementById("mic-icon");
+
+        function sendAudioToStreamlit(base64data) {
+            Streamlit.setComponentValue(base64data);
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    // Provide visual feedback it's processing
+                    micIcon.innerText = "hourglass_empty";
+                    micBtn.classList.remove('recording');
+                    micBtn.title = "Processing...";
+
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = () => {
+                        const base64data = reader.result;
+                        sendAudioToStreamlit(base64data);
+                        // Reset visuals after sending
+                        setTimeout(() => {
+                            micBtn.title = "Start Recording";
+                            micIcon.innerText = "mic";
+                            isRecording = false;
+                        }, 500); // short delay to show processing icon
+                    };
+
+                    // Stop all microphone tracks to release the mic
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                // Update UI visually
+                micBtn.classList.add("recording");
+                micIcon.innerText = "stop";
+                micBtn.title = "Stop Recording";
+
+                // Nullify any previous state in Streamlit while recording
+                Streamlit.setComponentValue(null);
+
+            } catch (err) {
+                console.error("Error accessing microphone: ", err);
+                alert("Microphone access denied or unavailable.");
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        }
+
+        micBtn.addEventListener("click", () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function onRender(event) {
+            // Optional: Handle data passed from Python if needed.
+            // Adjust frame height so it matches content tightly
+            Streamlit.setFrameHeight(55);
+        }
+
+        // Hook up the render event
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+
+        // Tell Streamlit the component is ready
+        Streamlit.setComponentReady();
+        Streamlit.setFrameHeight(55);
+    </script>
+</body>
+</html>

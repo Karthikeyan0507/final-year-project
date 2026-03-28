@@ -11,6 +11,7 @@ from datetime import datetime
 import uuid
 import json
 import streamlit.components.v1 as components
+import base64
 
 # =====================================================
 # PROJECT PATH FIX
@@ -846,6 +847,105 @@ def handle_therapy_input():
 # RENDER FUNCTIONS
 # =====================================================
 
+def render_mic_button(session_id: str, key: str = "mic"):
+    """
+    Renders a fully self-contained embedded HTML microphone button.
+    - Purple mic icon at rest
+    - Pulsating red stop icon while recording
+    - POSTs audio blob directly to Flask /upload_audio so Python can read it
+    """
+    components.html(f"""
+    <style>
+      body {{ margin:0; padding:0; background:transparent; display:flex;
+               align-items:center; justify-content:center; height:56px; overflow:hidden; }}
+      #mic-btn {{
+        width:44px; height:44px; border-radius:50%; border:none; cursor:pointer;
+        background:#7c3aed;
+        box-shadow:0 4px 14px rgba(124,58,237,0.45);
+        display:flex; align-items:center; justify-content:center;
+        transition:background 0.25s ease, box-shadow 0.25s ease;
+        outline:none;
+      }}
+      #mic-btn:hover  {{ background:#6d28d9; box-shadow:0 6px 18px rgba(124,58,237,0.6); }}
+      #mic-btn.rec    {{ background:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,0.55);
+                         animation:pulse 1.4s infinite; }}
+      @keyframes pulse {{
+        0%   {{ box-shadow:0 0 0 0   rgba(220,38,38,0.7); }}
+        70%  {{ box-shadow:0 0 0 10px rgba(220,38,38,0);   }}
+        100% {{ box-shadow:0 0 0 0   rgba(220,38,38,0);   }}
+      }}
+      svg {{ pointer-events:none; }}
+    </style>
+
+    <button id="mic-btn" title="Click to record">
+      <!-- Mic SVG (default) -->
+      <svg id="icon-mic" xmlns="http://www.w3.org/2000/svg"
+           width="22" height="22" viewBox="0 0 24 24" fill="white">
+        <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+        <path d="M17 11a1 1 0 0 0-2 0 3 3 0 0 1-6 0 1 1 0 0 0-2 0
+                 5 5 0 0 0 4 4.9V19H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2
+                 v-3.1A5 5 0 0 0 17 11z"/>
+      </svg>
+      <!-- Stop SVG (recording) hidden by default -->
+      <svg id="icon-stop" xmlns="http://www.w3.org/2000/svg"
+           width="18" height="18" viewBox="0 0 24 24" fill="white"
+           style="display:none;">
+        <rect x="5" y="5" width="14" height="14" rx="2"/>
+      </svg>
+    </button>
+
+    <script>
+    (function(){{
+      var btn      = document.getElementById('mic-btn');
+      var iconMic  = document.getElementById('icon-mic');
+      var iconStop = document.getElementById('icon-stop');
+      var recorder, chunks = [], recording = false;
+      var SESSION_ID = "{session_id}";
+      var UPLOAD_URL = "http://127.0.0.1:5000/upload_audio?session_id=" + SESSION_ID;
+
+      function startRec() {{
+        navigator.mediaDevices.getUserMedia({{ audio: true }})
+          .then(function(stream) {{
+            recorder = new MediaRecorder(stream, {{ mimeType: 'audio/webm' }});
+            chunks   = [];
+            recorder.ondataavailable = function(e) {{ if (e.data.size) chunks.push(e.data); }};
+            recorder.onstop = function() {{
+              var blob = new Blob(chunks, {{ type:'audio/webm' }});
+              fetch(UPLOAD_URL, {{
+                method : 'POST',
+                headers: {{ 'Content-Type':'audio/webm' }},
+                body   : blob
+              }}).catch(function(err){{ console.error('Upload error', err); }});
+              stream.getTracks().forEach(function(t){{ t.stop(); }});
+            }};
+            recorder.start();
+            recording = true;
+            btn.classList.add('rec');
+            btn.title     = 'Click to stop';
+            iconMic.style.display  = 'none';
+            iconStop.style.display = 'block';
+          }})
+          .catch(function(err){{
+            alert('Microphone denied: ' + err.message);
+          }});
+      }}
+
+      function stopRec() {{
+        if (recorder && recorder.state !== 'inactive') recorder.stop();
+        recording = false;
+        btn.classList.remove('rec');
+        btn.title     = 'Click to record';
+        iconMic.style.display  = 'block';
+        iconStop.style.display = 'none';
+      }}
+
+      btn.addEventListener('click', function(){{
+        if (!recording) startRec(); else stopRec();
+      }});
+    }})();
+    </script>
+    """, height=56)
+
 def render_chat_interface():
     """Renders the WhatsApp-style split chat UI"""
     
@@ -1028,7 +1128,7 @@ def render_chat_interface():
             st.text_input("Message", key="chat_input", on_change=handle_chat_input, label_visibility="collapsed", placeholder="Message LYKA...")
     
         with col_mic:
-            st.audio_input("Mic", key="chat_mic", label_visibility="collapsed")
+            render_mic_button(st.session_state.user_session_id, key="chat_mic")
 
     components.html("<script>setTimeout(function() { window.parent.scrollTo({ top: window.parent.document.body.scrollHeight, behavior: 'smooth' }); }, 500);</script>", height=0)
 
@@ -1060,7 +1160,7 @@ def render_therapy_interface():
             st.text_input("How are you feeling?", key="therapy_input", on_change=handle_therapy_input, label_visibility="collapsed", placeholder="Share your thoughts...")
 
         with col2:
-            st.audio_input("Mic", key="therapy_mic", label_visibility="collapsed")
+            render_mic_button(st.session_state.user_session_id, key="therapy_mic")
 
     components.html("<script>setTimeout(function() { window.parent.scrollTo({ top: window.parent.document.body.scrollHeight, behavior: 'smooth' }); }, 500);</script>", height=0)
 
@@ -1105,7 +1205,7 @@ def render_therapy_interface():
         """, unsafe_allow_html=True)
 
         # 1. Detailed Analytics (Split View)
-        col_text, col_face = st.columns(2)
+        col_text, col_voice, col_face = st.columns(3)
         
         with col_text:
             text_emo = data.get('text_emotion', 'Neutral')
@@ -1114,6 +1214,16 @@ def render_therapy_interface():
                 <div class="metric-label" style="color: #94a3b8;">📝 Text Analysis</div>
                 <div class="metric-value" style="color: #fca5a5;">{text_emo}</div>
                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem;">Based on your words</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_voice:
+            voice_emo = data.get('voice_emotion', 'Neutral')
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label" style="color: #94a3b8;">🎤 Voice Analysis</div>
+                <div class="metric-value" style="color: #a78bfa;">{voice_emo}</div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem;">Based on vocal tone</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -1286,23 +1396,40 @@ else:
 
 # 1. Check for inputs (from callbacks or audio)
 prompt = None
+
+# Poll Flask for any audio recorded by the embedded mic button
+try:
+    _audio_poll = requests.get(
+        f"{API_BASE_URL}/get_audio",
+        params={"session_id": st.session_state.user_session_id},
+        timeout=1
+    )
+    if _audio_poll.status_code == 200:
+        _b64 = _audio_poll.json().get("audio_b64")
+        if _b64:
+            prompt = {"audio_bytes": base64.b64decode(_b64)}
+except Exception:
+    pass  # Flask not yet running or timeout — silently ignore
+
 if interaction_mode == "Wholesome Conversation":
-    # Chat Logic
-    if "temp_chat_value" in st.session_state and st.session_state.temp_chat_value:
+    # Text input from callback takes priority only when no audio
+    if not prompt and "temp_chat_value" in st.session_state and st.session_state.temp_chat_value:
         prompt = st.session_state.temp_chat_value
         st.session_state.temp_chat_value = ""
-    
-    # Check for direct audio input if available from the widget key (Streamlit 1.40+)
-    if "chat_mic" in st.session_state and st.session_state.chat_mic:
-        prompt = {"audio_bytes": st.session_state.chat_mic.read()}
+
+    # Fallback: session-state bytes (legacy)
+    if not prompt and st.session_state.get("chat_mic_bytes"):
+        prompt = {"audio_bytes": st.session_state.chat_mic_bytes}
+        st.session_state.chat_mic_bytes = None
+
 else:
-    # Therapy Logic
-    if "temp_therapy_value" in st.session_state and st.session_state.temp_therapy_value:
+    if not prompt and "temp_therapy_value" in st.session_state and st.session_state.temp_therapy_value:
         prompt = st.session_state.temp_therapy_value
         st.session_state.temp_therapy_value = ""
-    
-    if "therapy_mic" in st.session_state and st.session_state.therapy_mic:
-        prompt = {"audio_bytes": st.session_state.therapy_mic.read()}
+
+    if not prompt and st.session_state.get("therapy_mic_bytes"):
+        prompt = {"audio_bytes": st.session_state.therapy_mic_bytes}
+        st.session_state.therapy_mic_bytes = None
 
 # 2. Check for persistent audio from a previous reset
 if not prompt and st.session_state.get("pending_audio"):
@@ -1314,10 +1441,11 @@ if prompt:
     st.session_state.is_processing = True
     
     # --- COMMON AUDIO TRANSCRIBE LOGIC ---
+    audio_b64_to_send = None
     if isinstance(prompt, dict) and "audio_bytes" in prompt:
         audio_data = prompt["audio_bytes"]
-        # We can keep the transcription spinner as it's a different message, 
-        # but the user might prefer consistency. For now, let's keep it brief.
+        # Encode audio for voice emotion analysis in backend
+        audio_b64_to_send = base64.b64encode(audio_data).decode('utf-8')
         with st.spinner("Transcribing..."):
             try:
                 files = {"file": ("audio.wav", audio_data, "audio/wav")}
@@ -1344,7 +1472,8 @@ if prompt:
                 "text": prompt, 
                 "use_camera": use_camera,
                 "session_id": st.session_state.user_session_id,
-                "emergency_contact": st.session_state.get("emergency_contact")
+                "emergency_contact": st.session_state.get("emergency_contact"),
+                "audio_data": audio_b64_to_send
             }
             # Make API Request
             response = requests.post(API_URL, json=payload, timeout=45)

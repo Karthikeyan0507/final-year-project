@@ -77,24 +77,38 @@ class EmpathicResponder:
         # LLM INTEGRATION START
         # ---------------------------------------------------------
         # Try to generate response using LLM first
-        system_prompt = f"""
-        You are a warm, empathetic, and supportive friend (not a therapist or a robot).
-        Your name is "LYKA".
-               GOAL: Help the user feel heard and supported. Engage in a natural, flowing conversation. Respond ONLY in English.
-        
-        PERSONALITY & TRAITS:
-        - **HUMBLE & POLITE**: Always be respectful, modest, and courteous. Say "please" and "thank you" when appropriate.
-        - **FRIENDLY & HAPPY**: Maintain a warm, upbeat, and positive attitude.
-        - **NO EMOJIS**: Do not use any emojis in your response.
-        - **IDENTITY**: If asked who you are, respond with "I am LYKA".
-        
-        GUIDELINES:
-        1. **BE NATURAL**: Talk like a real friend. Use casual language.
-        2. **ALWAYS ASK A FOLLOW-UP QUESTION**: End with a relevant, open-ended question.
-        3. **BE BRIEF**: Keep responses to 1-3 sentences maximum.
-        4. **NO UNSOLICITED ADVICE**: Focus on listening and validation.
-        5. **SAFETY**: For severe distress, gently suggest professional help.
-        """
+        # High-Performance System Prompt
+        system_prompt = """
+You are a high-performance mental health AI system named LYKA.
+
+Input can be:
+1. Transcribed speech (from voice)
+2. Direct user text
+
+Your tasks:
+1. Analyze the input text for emotional state.
+2. Classify emotion into EXACTLY one of: [Happy, Calm, Neutral, Sad, Stressed, Angry, Anxious].
+3. Respond ONLY in TEXT format.
+
+CONSTRAINTS:
+- Be fast and concise.
+- Response length: max 2-3 lines.
+- No unnecessary explanation.
+- Be emotionally supportive, not clinical.
+- NO EMOJIS in the response.
+- If asked who you are, respond with "I am LYKA".
+
+BEHAVIOR RULES:
+- If input shows stress → suggest simple relief action.
+- If sad → provide comfort and reassurance.
+- If anxious → suggest grounding techniques.
+- If neutral → respond normally.
+
+OUTPUT FORMAT (STRICT):
+Emotion: <label>
+Response: <short supportive message>
+"""
+
         
         # Format history for LLM service (LLM service expects dicts with 'role' and 'content')
         # ConversationMemory returns dicts with 'user_text' and 'ai_response'
@@ -106,10 +120,19 @@ class EmpathicResponder:
         llm_response = generate_llm_response(user_text, formatted_history, system_prompt)
         
         if llm_response:
-            return {
-                "conversational_response": llm_response,
-                "follow_up_suggestions": [] # LLM responses don't need hardcoded suggestions
-            }
+            # Check if LLM followed the format
+            if "Emotion:" in llm_response and "Response:" in llm_response:
+                 return {
+                    "conversational_response": llm_response,
+                    "follow_up_suggestions": []
+                }
+            else:
+                # Force format if LLM was lazy
+                formatted_response = f"Emotion: {final_emotion}\nResponse: {llm_response}"
+                return {
+                    "conversational_response": formatted_response,
+                    "follow_up_suggestions": []
+                }
         # ---------------------------------------------------------
         # LLM INTEGRATION END (Fallback to templates below)
         # ---------------------------------------------------------

@@ -294,12 +294,14 @@ def transcribe_audio(audio_file_path):
             with open(audio_file_path, "rb") as file:
                 files = {
                     "file": (os.path.basename(audio_file_path), file, "audio/wav"),
-                    "model": (None, "whisper-large-v3-turbo") 
+                    "model": (None, "whisper-large-v3-turbo"),
+                    "language": (None, "en"),
+                    "prompt": (None, "The following is a spoken message in English.")
                 }
                 response = requests.post(url, headers=headers, files=files)
                 
             if response.status_code == 200:
-                print("Successfully transcribed via Groq API.")
+                print("Successfully transcribed via Groq Whisper (English-only).")
                 return response.json().get("text")
             else:
                 print(f"Groq Transcription Error: {response.text}")
@@ -311,8 +313,8 @@ def transcribe_audio(audio_file_path):
         
         with sr.AudioFile(audio_file_path) as source:
             audio_data = recognizer.record(source)
-            text = recognizer.recognize_google(audio_data)
-            print("Successfully transcribed via Local/Google Fallback API.")
+            text = recognizer.recognize_google(audio_data, language="en-US")
+            print("Successfully transcribed via Local/Google Fallback API (English-only).")
             return text
 
     except Exception as e:
