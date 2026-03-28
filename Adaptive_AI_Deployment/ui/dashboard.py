@@ -858,14 +858,95 @@ def render_chat_interface():
             <div class="chat-header-status">online</div>
         </div>
         <div class="chat-header-actions">
-            <span title="Voice Call">📞</span>
+            <!-- 📞 is now an interactive streamlit button below -->
             <span title="Video Call">📹</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Inject the interactive phone button into the header
+    header_btn_container = st.container()
+    with header_btn_container:
+        st.markdown('<div class="emergency-btn-anchor"></div>', unsafe_allow_html=True)
+        if st.button("📞", key="emergency_phone_btn", help="Setup Emotion Delivery (Notify Beloved One)"):
+            st.session_state.show_emergency_form = not st.session_state.show_emergency_form
+
+    st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"]:has(.emergency-btn-anchor):not(:has(div[data-testid="stVerticalBlock"] .emergency-btn-anchor)) {
+            position: fixed;
+            top: 2px;
+            right: 70px; /* Position it right next to the video call icon */
+            z-index: 1002;
+            width: auto !important;
+        }
+        div[data-testid="stVerticalBlock"]:has(.emergency-btn-anchor) button {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-size: 1.35rem !important;
+            color: #8b9bb4 !important;
+            padding: 0 10px !important;
+            min-height: 48px !important;
+        }
+        div[data-testid="stVerticalBlock"]:has(.emergency-btn-anchor) button:hover {
+            color: #fff !important;
+            transform: scale(1.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     # Add a spacer at the top for the header
     st.markdown('<div style="margin-top: 60px;"></div>', unsafe_allow_html=True)
+
+    # Emotion Delivery Setup Form
+    if st.session_state.get("show_emergency_form"):
+        with st.container():
+            st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.95); padding: 15px 20px 5px; border-radius: 12px 12px 0 0; border: 1px solid #8b5cf6; border-bottom: none;">
+                <h3 style="color: #a78bfa; margin-top: 0; font-size: 1.3rem;">❤️ Emotion Delivery Setup</h3>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">Whenever LYKA detects critical stress or trauma, we can automatically notify your designated beloved one gently.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.form("emergency_contact_form", border=True):
+                c1, c2 = st.columns(2)
+                ec = st.session_state.emergency_contact or {}
+                user_name = c1.text_input("Your Name", value=ec.get("user_name", ""))
+                user_phone = c2.text_input("Your Phone Number", value=ec.get("user_phone", ""))
+                
+                c3, c4 = st.columns(2)
+                beloved_name = c3.text_input("Beloved One Name", value=ec.get("beloved_name", ""))
+                beloved_phone = c4.text_input("Beloved Phone Number", value=ec.get("beloved_phone", ""))
+                
+                c5, c6 = st.columns(2)
+                beloved_email = c5.text_input("Beloved Email (For Free Alerts)", value=ec.get("beloved_email", ""))
+                
+                rels = ["Mom", "Dad", "Sister", "Brother", "Girlfriend", "Boyfriend", "Friend", "Spouse"]
+                current_rel = ec.get("relationship", "Mom")
+                try: idx = rels.index(current_rel)
+                except ValueError: idx = 0
+                relationship = c6.selectbox("Relationship", rels, index=idx)
+                
+                sc1, sc2 = st.columns([1, 4])
+                submit = sc1.form_submit_button("Save Profile", type="primary")
+                if submit:
+                    st.session_state.emergency_contact = {
+                        "user_name": user_name,
+                        "user_phone": user_phone,
+                        "beloved_name": beloved_name,
+                        "beloved_phone": beloved_phone,
+                        "beloved_email": beloved_email,
+                        "relationship": relationship
+                    }
+                    st.session_state.show_emergency_form = False
+                    st.rerun()
+
+            if st.button("Cancel & Close", key="close_emergency_form"):
+                st.session_state.show_emergency_form = False
+                st.rerun()
+                
+            st.markdown("<hr>", unsafe_allow_html=True)
     
     # ---------- Message History ----------
     total = len(st.session_state.messages)
@@ -1192,6 +1273,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "latest_analysis" not in st.session_state:
     st.session_state.latest_analysis = {}
+if "emergency_contact" not in st.session_state:
+    st.session_state.emergency_contact = None
+if "show_emergency_form" not in st.session_state:
+    st.session_state.show_emergency_form = False
 
 # 0. Render Interface based on Mode
 if interaction_mode == "Wholesome Conversation":
@@ -1258,7 +1343,8 @@ if prompt:
             payload = {
                 "text": prompt, 
                 "use_camera": use_camera,
-                "session_id": st.session_state.user_session_id
+                "session_id": st.session_state.user_session_id,
+                "emergency_contact": st.session_state.get("emergency_contact")
             }
             # Make API Request
             response = requests.post(API_URL, json=payload, timeout=45)
@@ -1286,6 +1372,16 @@ if prompt:
                         "content": ai_response,
                         "analysis": data,
                         "streaming": True
+                    })
+                
+                # Check for Emergency Notification Delivery
+                if data.get("emergency_notified"):
+                    st.toast("🚨 Automatically dispatched care message to your beloved one!", icon="💌")
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": f"**[Emotion Delivery Activated]** 💌 \nI noticed you're feeling significantly distressed. I have automatically sent the following alert message to your designated contact:\n\n> *\"{data.get('simulated_message')}\"*",
+                        "streaming": False,
+                        "time": datetime.now().strftime("%I:%M %p")
                     })
                 
                 # Clear query params

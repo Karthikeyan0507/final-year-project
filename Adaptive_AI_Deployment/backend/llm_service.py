@@ -71,7 +71,7 @@ def generate_ai_recommendations(emotion, user_text, context=None):
     - movie: A movie or show recommendation
     - game: A video game or interactive experience recommendation
     
-    Ensure the recommendations are natural, varied, and specific. Avoid generic answers.
+    Ensure the recommendations are natural, varied, and specific. Provide all context and text in English ONLY. Avoid generic answers.
     JSON ONLY. No other text.
     """
     
@@ -83,7 +83,7 @@ def generate_ai_recommendations(emotion, user_text, context=None):
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {"Authorization": f"Bearer {groq_api_key}", "Content-Type": "application/json"}
             payload = {
-                "model": "llama-3.3-70b-versatile",
+                "model": "llama-3.1-8b-instant",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -221,7 +221,7 @@ def _call_groq(api_key, user_text, history, system_prompt):
         messages.append({"role": "user", "content": user_text})
         
         payload = {
-            "model": "llama-3.3-70b-versatile", # Updated to supported model
+            "model": "llama-3.1-8b-instant",
             "messages": messages,
             "temperature": 0.7,
             "max_tokens": 300

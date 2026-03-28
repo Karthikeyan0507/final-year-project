@@ -40,6 +40,28 @@ class EmpathicResponder:
         self.conversation_context = context or {}
         conversation_history = conversation_history or []
         
+        # CRITICAL SAFETY: Direct Interception for self-harm intent (Overrides LLM API and provides localized support)
+        crisis_keywords = [
+            "suicide", "end my life", "kill myself", "want to die", 
+            "give up on life", "no reason to live", "end up my life", 
+            "end it all", "take my own life", "better off dead"
+        ]
+        if any(kw in user_text.lower() for kw in crisis_keywords):
+            crisis_response = (
+                "🚨 **I am deeply concerned about what you just shared.** Please know that your life is incredibly valuable, "
+                "even when the pain feels completely unbearable right now.\n\n"
+                "You are not alone in this fight. Please reach out to someone who can help immediately:\n\n"
+                "📞 **AASRA (India):** +91-9820466726 (24x7)\n"
+                "📞 **Vandrevala Foundation:** 9999 666 555 | 1860 2662 345 | 1800 2333 330 (24x7)\n"
+                "📞 **Kiran Mental Health Helpline:** 1800-599-0019\n"
+                "📞 **National Emergency:** 112\n\n"
+                "People care about you, and there is support available right this second. Please make that call or speak to someone near you."
+            )
+            return {
+                "conversational_response": crisis_response,
+                "follow_up_suggestions": []
+            }
+
         # Custom handling for short inputs (e.g., "hey", "hi")
         if len(user_text.split()) <= 3 and emotion_lower == "neutral" and not conversation_history:
              return {
@@ -57,23 +79,21 @@ class EmpathicResponder:
         # Try to generate response using LLM first
         system_prompt = f"""
         You are a warm, empathetic, and supportive friend (not a therapist or a robot).
-        Your name is "Adaptive AI".
+        Your name is "LYKA".
+               GOAL: Help the user feel heard and supported. Engage in a natural, flowing conversation. Respond ONLY in English.
         
-        GOAL: Help the user feel heard and supported. Engage in a natural, flowing conversation.
-        
-        CURRENT STATE:
-        - User Emotion: {final_emotion}
-        - User Input: "{user_text}"
+        PERSONALITY & TRAITS:
+        - **HUMBLE & POLITE**: Always be respectful, modest, and courteous. Say "please" and "thank you" when appropriate.
+        - **FRIENDLY & HAPPY**: Maintain a warm, upbeat, and positive attitude.
+        - **NO EMOJIS**: Do not use any emojis in your response.
+        - **IDENTITY**: If asked who you are, respond with "I am LYKA".
         
         GUIDELINES:
-        1. **BE NATURAL**: Talk like a real friend. Use casual language. Avoid stiff phrases like "I understand that you are feeling...".
-        2. **ALWAYS ASK A FOLLOW-UP QUESTION**: To keep the conversation going, almost ALWAYS end your response with a relevant, open-ended question based on what the user just said or a related topic.
-        3. **USE CONTEXT**: Look at the conversation history. If the user just answered a question, follow up naturally. Don't repeat yourself.
-        4. **BE BRIEF**: Keep responses to 1-3 sentences maximum.
-        5. **NO UNSOLICITED ADVICE**: Don't give advice unless asked. Focus on listening and validation.
-        6. **AVOID REPETITION**: Do not start sentences with "I hear you", "It sounds like", or "I understand". Vary your language.
-        7. **SAFETY**: If the user mentions self-harm or severe distress, gently suggest professional help, but remain supportive.
-        8. **STAY ON TOPIC**: Respond directly to what the user just said.
+        1. **BE NATURAL**: Talk like a real friend. Use casual language.
+        2. **ALWAYS ASK A FOLLOW-UP QUESTION**: End with a relevant, open-ended question.
+        3. **BE BRIEF**: Keep responses to 1-3 sentences maximum.
+        4. **NO UNSOLICITED ADVICE**: Focus on listening and validation.
+        5. **SAFETY**: For severe distress, gently suggest professional help.
         """
         
         # Format history for LLM service (LLM service expects dicts with 'role' and 'content')

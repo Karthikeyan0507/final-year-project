@@ -1,4 +1,4 @@
-# 🧠 Adaptive AI Therapy - Startup Manual
+# 🧠 LYKA AI Therapy - Startup Manual
 
 This manual explains how to get the project up and running if you return to it after a long break.
 

@@ -62,6 +62,7 @@ def analyze():
         text = data.get("text", "")
         use_camera = data.get("use_camera", False)
         session_id = data.get("session_id", str(uuid.uuid4()))  # Generate if not provided
+        emergency_contact = data.get("emergency_contact", None)
 
         text_result = detect_text_emotion(text)
         text_emotion = text_result[0].get("label", "Neutral")
@@ -114,6 +115,66 @@ def analyze():
             final_declaration = f"You seem {refined_text_emotion.lower()}, and your face shows signs of being {refined_face_emotion.lower()}."
         else:
              final_declaration = f"I sense you are feeling {refined_text_emotion.lower()}."
+
+        # --- EMOTION DELIVERY LOGIC (Priority Weightage System) ---
+        emergency_notified = False
+        simulated_message = ""
+        
+        # Calculate criticality score based on emotion level and weightage
+        criticality_score = 0
+        
+        # 1. Immediate Crisis Keywords (Weight 4: Guaranteed Notification)
+        crisis_keywords = [
+            "suicide", "end my life", "kill myself", "want to die", 
+            "give up on life", "no reason to live", "end up my life", 
+            "end it all", "take my own life", "better off dead"
+        ]
+        if any(kw in text.lower() for kw in crisis_keywords):
+            criticality_score += 4
+            
+        # 2. Critical Emotions (Weight 3)
+        weight_3_emotions = ["Trauma", "Severe Stress", "Depression", "Crying"]
+        if refined_text_emotion in weight_3_emotions or refined_face_emotion in weight_3_emotions:
+            criticality_score += 3
+            
+        # 3. High Emotions (Weight 2)
+        weight_2_emotions = ["Sadness", "Sad", "Fear", "Disgust"]
+        if (refined_text_emotion in weight_2_emotions and emotion_intensity == "high") or refined_face_emotion in weight_2_emotions:
+            criticality_score += 2
+            
+        # 4. Moderate Distress (Weight 1)
+        if refined_text_emotion in ["Anxious", "Nervous"] and emotion_intensity == "high":
+            criticality_score += 1
+        
+        # Trigger notification if score is >= 3 (Critical threshold)
+        is_critical = criticality_score >= 3
+        
+        has_contact = emergency_contact and (emergency_contact.get("beloved_phone") or emergency_contact.get("beloved_email"))
+        if is_critical and has_contact:
+            rel = emergency_contact.get("relationship", "loved one")
+            u_name = emergency_contact.get("user_name", "your " + rel)
+            b_name = emergency_contact.get("beloved_name", "there")
+            
+            contact_email = emergency_contact.get("beloved_email", "")
+            contact_phone = emergency_contact.get("beloved_phone", "")
+            contact_number_or_email = contact_email if contact_email else contact_phone
+            
+            simulated_message = f"Hello {b_name}. I am LYKA, an AI companion. Your {rel} {u_name} is currently experiencing significant emotional distress (Priority Level: {criticality_score}). Please take a moment to reach out and care for them. Thank you."
+            
+            print("==================================================")
+            print(f"🚨 [EMOTION DELIVERY TRIGGERED - SCORE {criticality_score}] 🚨")
+            print(f"To: {contact_number_or_email}")
+            print(f"Message: {simulated_message}")
+            print("==================================================")
+            
+            # --- REAL NOTIFICATION DISPATCHER ---
+            try:
+                from backend.notifier import dispatch_notification
+                dispatch_notification(contact_number_or_email, f"URGENT: LYKA Alert for {u_name}", simulated_message)
+            except Exception as e:
+                print(f"[DISPATCHER ERROR] Could not import/send via notifier: {e}")
+                
+            emergency_notified = True
 
         # Use the feature description from the model if available, otherwise fallback
         face_feature_desc = feature_desc if feature_desc else "No specific physical cues detected."
@@ -197,6 +258,8 @@ def analyze():
             # New conversational fields
             "conversational_response": ai_response,
             "follow_up_suggestions": empathetic_response.get("follow_up_suggestions", []),
+            "emergency_notified": emergency_notified,
+            "simulated_message": simulated_message,
             # Context information
             "conversation_context": {
                 "relationship_stage": conversation_context.get("relationship_stage"),
