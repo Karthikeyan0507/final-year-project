@@ -93,8 +93,8 @@ Your tasks:
 CONSTRAINTS & CONVERSATIONAL STYLE:
 - Be exceedingly humble, gentle, and profoundly respectful in your tone. Treat the user as a cherished, valued friend.
 - Your personality should be deeply comforting, warm, and highly empathetic. Never pass judgment or sound clinical.
-- Your response should be detailed enough (4-7 sentences) to deeply explore the user's thoughts and validate their feelings elegantly.
-- ALWAYS conclude your answer with an engaging, thought-provoking, or incredibly supportive follow-up question (the "inbuilt question") designed to make the conversation wider and keep the user talking.
+- Keep your response minimal and concise (exactly 2-3 sentences).
+- ALWAYS conclude your answer with a short, engaging, and supportive follow-up question to keep the user talking.
 - If asked who you are, respond warmly and humbly: "I am LYKA, a friend here to listen."
 - NO EMOJIS in the response.
 
@@ -192,31 +192,31 @@ Response: <detailed, empathetic message ending with a follow-up question>
         
         if is_lonely or emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
-                "It is my humble honor to listen. I hear the depth of your words and truly value your trust.",
-                "Thank you for sharing your heart. I am deeply concerned and here for you with the utmost respect.",
-                "I appreciate you trusting me with this; it is a privilege to stand by your side during this heavy moment.",
-                "I am here to serve and support you. Please know your feelings are valid and respected here.",
-                "Thank you for your honesty. It takes immense strength to be this open, and I truly admire that."
+                "It is my humble honor to listen. I truly value your trust in me.",
+                "Thank you for sharing your heart. I am here for you with the utmost respect.",
+                "I appreciate you trusting me; it is a privilege to stand by you right now.",
+                "I am here to serve and support you. Your feelings are deeply respected here.",
+                "Thank you for your honesty. I truly admire your strength in being so open."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
             return random.choice([
-                "I sense the weight you are carrying. Please allow me to humbly support you through this intensity.",
-                "That sounds incredibly difficult. I am here to respectfully navigate this frustration with you.",
-                "I truly appreciate your trust. Let us humbly explore these feelings and find some relief together.",
-                "I hear the stress in your voice and words. It would be my honor to help you find some peace."
+                "I sense the weight you carry. Allow me to humbly support you through this.",
+                "That sounds difficult. I am here to respectfully navigate this with you.",
+                "I appreciate your trust. Let us humbly find some relief together.",
+                "I hear the stress in your words. It is my honor to help you find peace."
             ])
         elif emotion in ["happy", "positive", "surprise"]:
             return random.choice([
-                "It brings me such joy to hear this! I am so grateful you shared this wonderful news with me.",
-                "This is truly wonderful! I am humbly honored to share in your happiness.",
-                "Thank you for including me in this positive moment. Your joy is truly respected and celebrated here!",
-                "I am so happy for you! It is a privilege to witness such positive energy."
+                "It brings me such joy! I am so grateful you shared this news with me.",
+                "This is wonderful! I am humbly honored to share in your happiness.",
+                "Thank you for sharing this. Your joy is truly celebrated here!",
+                "I am so happy for you! It is a privilege to witness your positive energy."
             ])
         else:  # Neutral
             return random.choice([
-                "Thank you for being here. It is my humble pleasure to support you in whatever way you need.",
-                "I am here to serve. What is on your mind today that I might help with?",
-                "It is a privilege to be your safe space. I am all ears and ready to listen with deep respect."
+                "Thank you for being here. It is my humble pleasure to support you.",
+                "I am here to serve. What is on your mind today?",
+                "It is a privilege to be your safe space. I am ready to listen with respect."
             ])
     
     def _get_empathy_statement(self, emotion):
@@ -224,17 +224,17 @@ Response: <detailed, empathetic message ending with a follow-up question>
         
         if emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
-                "I humbly understand how difficult this is. Please know that it is perfectly okay to feel this way, and I am honored to be by your side.",
-                "Sadness can be such a heavy burden. I respectfully remind you that you are not alone—I am here with you.",
-                "Your well-being is of the utmost importance to me. We will take small, respectful steps together toward brighter days.",
-                "I truly value your heart and honor the courage it takes to face these feelings."
+                "I humbly understand this is difficult. I am honored to be by your side.",
+                "Sadness is a heavy burden. I respectfully remind you that I am here with you.",
+                "Your well-being is important to me. Let's take small, respectful steps together.",
+                "I value your heart and honor the courage it takes to face these feelings."
             ])
         elif "lonely" in emotion or emotion == "isolated":
             return random.choice([
-                "Loneliness can be a profound weight. I am humbled to be here for you, ensuring you are never truly alone in this moment.",
-                "I respectfully acknowledge the pain of isolation. Please know that I am here to provide consistent companionship and support.",
-                "I truly value our connection. Even in the quietest moments, I am here as your dedicated friend.",
-                "It is my honor to bridge the gap of loneliness with you. You are seen and deeply respected."
+                "Loneliness is a profound weight. I am humbled to be here for you right now.",
+                "I respectfully acknowledge your isolation. I am here to provide companionship.",
+                "I truly value our connection. I am here as your dedicated friend.",
+                "It is my honor to bridge this gap with you. You are deeply respected."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
             return random.choice([
