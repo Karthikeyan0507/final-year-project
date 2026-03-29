@@ -915,7 +915,30 @@ def render_mic_button(session_id: str, key: str = "mic"):
                 method : 'POST',
                 headers: {{ 'Content-Type':'audio/webm' }},
                 body   : blob
-              }}).catch(function(err){{ console.error('Upload error', err); }});
+              }}).then(function(resp) {{
+                if (resp.ok) {{
+                  console.log('[LYKA Mic] Upload OK — triggering Streamlit rerun...');
+                  // Wait 400ms for Flask to store data, then click hidden trigger button
+                  setTimeout(function() {{
+                    try {{
+                      var parentDoc = window.parent.document;
+                      var allBtns = parentDoc.querySelectorAll('button');
+                      for (var i = 0; i < allBtns.length; i++) {{
+                        if (allBtns[i].textContent.trim() === '\u25cf') {{
+                          allBtns[i].click();
+                          console.log('[LYKA Mic] Streamlit rerun triggered via hidden button.');
+                          return;
+                        }}
+                      }}
+                      console.warn('[LYKA Mic] Hidden trigger button not found in DOM.');
+                    }} catch(e) {{
+                      console.warn('[LYKA Mic] Could not trigger rerun:', e);
+                    }}
+                  }}, 400);
+                }} else {{
+                  console.error('[LYKA Mic] Upload failed, status:', resp.status);
+                }}
+              }}).catch(function(err){{ console.error('[LYKA Mic] Upload error:', err); }});
               stream.getTracks().forEach(function(t){{ t.stop(); }});
             }};
             recorder.start();
@@ -1304,8 +1327,8 @@ def render_therapy_interface():
             </a>
             """, unsafe_allow_html=True)
             
-        # Row 2: Entertainment (Music, Movie, Game) with FEEDBACK
-        r2_col1, r2_col2, r2_col3 = st.columns(3)
+        # Row 2: Entertainment (Music & Movie)
+        r2_col1, r2_col2 = st.columns(2)
         
         # Music (YouTube Link)
         with r2_col1:
@@ -1345,16 +1368,30 @@ def render_therapy_interface():
             if fb_c2.button("👎", key=f"dislike_movie", use_container_width=True):
                  send_feedback(data.get("final_emotion"), movie_item, -1, "movie")
 
-        # Game (Google Search Link)
-        with r2_col3:
+        # Row 3: Interactive Media (Game & Documentary)
+        r3_col1, r3_col2 = st.columns(2)
+
+        # Game (Poki or Search Link)
+        with r3_col1:
             game_item = data.get('game', 'N/A')
-            game_url = f"https://www.google.com/search?q={game_item.replace(' ', '+')}+game"
+            # Extract URL if present in the string (e.g., from Poki)
+            import re
+            extracted_links = re.findall(r'(https?://\S+)', game_item)
+            if extracted_links:
+                game_url = extracted_links[0].rstrip(')')
+                display_name = game_item.split('(')[0].strip()
+                action_text = "Play Now on Poki"
+            else:
+                game_url = f"https://www.google.com/search?q={game_item.replace(' ', '+')}+game"
+                display_name = game_item
+                action_text = "Search Game"
+                
             st.markdown(f"""
             <a href="{game_url}" target="_blank" class="link-card">
                 <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
-                    <div class="metric-label" style="color: #2dd4bf;">🎮 Game</div>
-                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{game_item}</div>
-                    <div class="action-link">Play/Search Game</div>
+                    <div class="metric-label" style="color: #2dd4bf;">🎮 Game (Online/Browser)</div>
+                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{display_name}</div>
+                    <div class="action-link">{action_text} 🎮</div>
                 </div>
             </a>
             """, unsafe_allow_html=True)
@@ -1363,6 +1400,35 @@ def render_therapy_interface():
                 send_feedback(data.get("final_emotion"), game_item, 1, "game")
             if fb_c2.button("👎", key=f"dislike_game", use_container_width=True):
                  send_feedback(data.get("final_emotion"), game_item, -1, "game")
+
+        # Documentary (New Category)
+        with r3_col2:
+            doc_item = data.get('documentary', 'N/A')
+            # Extract URL if present
+            extracted_doc_links = re.findall(r'(https?://\S+)', doc_item)
+            if extracted_doc_links:
+                doc_url = extracted_doc_links[0].rstrip(')')
+                doc_display = doc_item.split('(')[0].strip()
+                doc_action = "Watch Now"
+            else:
+                doc_url = f"https://www.youtube.com/results?search_query={doc_item.replace(' ', '+')}+documentary"
+                doc_display = doc_item
+                doc_action = "Find Documentary"
+
+            st.markdown(f"""
+            <a href="{doc_url}" target="_blank" class="link-card">
+                <div class="metric-card" style="align-items: flex-start; text-align: left; background: rgba(30, 41, 59, 0.4); margin-bottom: 0.5rem;">
+                    <div class="metric-label" style="color: #60a5fa;">📽️ Documentary</div>
+                    <div style="color: #f1f5f9; font-size: 0.95rem; min-height: 2rem;">{doc_display}</div>
+                    <div class="action-link">{doc_action} 📺</div>
+                </div>
+            </a>
+            """, unsafe_allow_html=True)
+            fb_c1, fb_c2 = st.columns(2)
+            if fb_c1.button("👍", key=f"like_doc", use_container_width=True):
+                send_feedback(data.get("final_emotion"), doc_item, 1, "documentary")
+            if fb_c2.button("👎", key=f"dislike_doc", use_container_width=True):
+                 send_feedback(data.get("final_emotion"), doc_item, -1, "documentary")
 
     return None
 
@@ -1387,6 +1453,8 @@ if "emergency_contact" not in st.session_state:
     st.session_state.emergency_contact = None
 if "show_emergency_form" not in st.session_state:
     st.session_state.show_emergency_form = False
+if "audio_ready" not in st.session_state:
+    st.session_state.audio_ready = False
 
 # 0. Render Interface based on Mode
 if interaction_mode == "Wholesome Conversation":
@@ -1394,22 +1462,60 @@ if interaction_mode == "Wholesome Conversation":
 else:
     render_therapy_interface()
 
+# ── Hidden mic trigger button ────────────────────────────────────────────────
+# This invisible button is clicked by the embedded mic JS after audio upload
+# completes, forcing a DELIBERATE Streamlit rerun specifically for audio pickup.
+# The ● character makes it unique and easy to find in the DOM.
+with st.container():
+    st.markdown(
+        """
+        <style>
+        /* Hide the markdown block itself */
+        div[data-testid="stElementContainer"]:has(span.mic-trigger-anchor) {
+            position: fixed !important;
+            top: -9999px !important;
+            opacity: 0;
+        }
+        /* Hide the button block immediately following the markdown block */
+        div[data-testid="stElementContainer"]:has(span.mic-trigger-anchor) + div[data-testid="stElementContainer"] {
+            position: fixed !important;
+            top: -9999px !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+        </style>
+        <span class="mic-trigger-anchor"></span>
+        """,
+        unsafe_allow_html=True,
+    )
+    # This click sets audio_ready = True so the poll block below knows to run
+    if st.button("\u25cf", key="mic_audio_trigger"):
+        st.session_state.audio_ready = True
+# ─────────────────────────────────────────────────────────────────────────────
+
 # 1. Check for inputs (from callbacks or audio)
 prompt = None
 
-# Poll Flask for any audio recorded by the embedded mic button
-try:
-    _audio_poll = requests.get(
-        f"{API_BASE_URL}/get_audio",
-        params={"session_id": st.session_state.user_session_id},
-        timeout=1
-    )
-    if _audio_poll.status_code == 200:
-        _b64 = _audio_poll.json().get("audio_b64")
-        if _b64:
-            prompt = {"audio_bytes": base64.b64decode(_b64)}
-except Exception:
-    pass  # Flask not yet running or timeout — silently ignore
+# Poll Flask for audio ONLY when the mic button has signalled upload complete.
+# This prevents unrelated reruns (button clicks, text input, etc.) from
+# accidentally consuming the audio before the processing block runs.
+if st.session_state.get("audio_ready", False):
+    st.session_state.audio_ready = False  # Reset immediately
+    try:
+        _audio_poll = requests.get(
+            f"{API_BASE_URL}/get_audio",
+            params={"session_id": st.session_state.user_session_id},
+            timeout=2
+        )
+        if _audio_poll.status_code == 200:
+            _b64 = _audio_poll.json().get("audio_b64")
+            if _b64:
+                prompt = {"audio_bytes": base64.b64decode(_b64), "mime": "audio/webm"}
+                print(f"[Dashboard] Audio received from Flask, size: {len(base64.b64decode(_b64))} bytes")
+            else:
+                print("[Dashboard] audio_ready was set but Flask returned no audio.")
+    except Exception as _e:
+        print(f"[Dashboard] Audio poll error: {_e}")
 
 if interaction_mode == "Wholesome Conversation":
     # Text input from callback takes priority only when no audio
@@ -1419,7 +1525,7 @@ if interaction_mode == "Wholesome Conversation":
 
     # Fallback: session-state bytes (legacy)
     if not prompt and st.session_state.get("chat_mic_bytes"):
-        prompt = {"audio_bytes": st.session_state.chat_mic_bytes}
+        prompt = {"audio_bytes": st.session_state.chat_mic_bytes, "mime": "audio/webm"}
         st.session_state.chat_mic_bytes = None
 
 else:
@@ -1428,12 +1534,12 @@ else:
         st.session_state.temp_therapy_value = ""
 
     if not prompt and st.session_state.get("therapy_mic_bytes"):
-        prompt = {"audio_bytes": st.session_state.therapy_mic_bytes}
+        prompt = {"audio_bytes": st.session_state.therapy_mic_bytes, "mime": "audio/webm"}
         st.session_state.therapy_mic_bytes = None
 
 # 2. Check for persistent audio from a previous reset
 if not prompt and st.session_state.get("pending_audio"):
-    prompt = {"audio_bytes": st.session_state.pending_audio}
+    prompt = {"audio_bytes": st.session_state.pending_audio, "mime": "audio/webm"}
     st.session_state.pending_audio = None
 
 # Process Input if prompt exists
@@ -1443,17 +1549,32 @@ if prompt:
     # --- COMMON AUDIO TRANSCRIBE LOGIC ---
     audio_b64_to_send = None
     if isinstance(prompt, dict) and "audio_bytes" in prompt:
-        audio_data = prompt["audio_bytes"]
-        # Encode audio for voice emotion analysis in backend
+        audio_data  = prompt["audio_bytes"]
+        audio_mime  = prompt.get("mime", "audio/webm")  # Always WebM from browser mic
         audio_b64_to_send = base64.b64encode(audio_data).decode('utf-8')
-        with st.spinner("Transcribing..."):
+
+        # Choose file extension to match the actual format
+        ext = ".webm" if "webm" in audio_mime else ".wav"
+        fname = f"audio{ext}"
+
+        with st.spinner("Transcribing voice..."):
             try:
-                files = {"file": ("audio.wav", audio_data, "audio/wav")}
-                transcribe_res = requests.post(f"{API_BASE_URL}/transcribe", files=files)
+                # Send with the CORRECT MIME type so Groq Whisper accepts it
+                files = {"file": (fname, audio_data, audio_mime)}
+                transcribe_res = requests.post(
+                    f"{API_BASE_URL}/transcribe", files=files, timeout=30
+                )
                 if transcribe_res.status_code == 200:
-                    prompt = transcribe_res.json().get("text")
+                    transcribed = transcribe_res.json().get("text", "").strip()
+                    if transcribed:
+                        prompt = transcribed
+                        print(f"[Dashboard] Transcription: '{prompt}'")
+                    else:
+                        st.warning("Transcription returned empty. Please speak clearly and try again.")
+                        prompt = None
                 else:
-                    st.error("Could not transcribe audio.")
+                    err_detail = transcribe_res.json().get("error", transcribe_res.text)
+                    st.error(f"Transcription failed: {err_detail}")
                     prompt = None
             except Exception as e:
                 st.error(f"Error during transcription: {e}")

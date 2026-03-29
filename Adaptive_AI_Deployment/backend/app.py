@@ -226,16 +226,17 @@ def analyze():
         # Get explicit conversation history (last 20 turns)
         recent_history = session_memory.get_recent_exchanges(20)
 
-        # Get enhanced recommendations (AI-driven first, fallback to RL)
-        from backend.llm_service import generate_ai_recommendations
-        ai_recs = generate_ai_recommendations(final_emotion, text, conversation_context)
-        
-        if ai_recs:
-            print(f"[RECS] Using AI-generated recommendations for {final_emotion}.")
-            recommendations = ai_recs
-        else:
-            print(f"[RECS] Falling back to RL engine for {final_emotion}.")
-            recommendations = choose_therapy(final_emotion, face_features)
+        # -------------------------------------------------------------------
+        # ML THERAPY RECOMMENDATION ENGINE
+        # Fuses Text, Voice, and Face features to calculate optimal therapy
+        # -------------------------------------------------------------------
+        print(f"[RECS] Engaging Unified Therapy ML Model for T:{text_emotion} V:{voice_emotion} F:{face_emotion}")
+        recommendations = choose_therapy(
+            text_emotion=text_emotion,
+            voice_emotion=voice_emotion,
+            face_emotion=face_emotion,
+            face_features=face_features
+        )
 
         # Get historical emotional state (long-term memory)
         historical_context = get_previous_emotional_state(session_id)
@@ -259,7 +260,8 @@ def analyze():
             try:
                 llm_lines = ai_response.split('\n')
                 parsed_emotion = None
-                parsed_message = None
+                parsed_message_lines = []
+                capture_response = False
                 
                 for line in llm_lines:
                     if line.startswith("Emotion:"):
@@ -267,12 +269,15 @@ def analyze():
                         if trimmed_emotion in ["Happy", "Calm", "Neutral", "Sad", "Stressed", "Angry", "Anxious"]:
                             parsed_emotion = trimmed_emotion
                     elif line.startswith("Response:"):
-                        parsed_message = line.replace("Response:", "").strip()
+                        capture_response = True
+                        parsed_message_lines.append(line.replace("Response:", "").strip())
+                    elif capture_response:
+                        parsed_message_lines.append(line.strip())
                 
                 if parsed_emotion:
                     final_emotion = parsed_emotion
-                if parsed_message:
-                    ai_response = parsed_message
+                if parsed_message_lines:
+                    ai_response = "\n".join(parsed_message_lines).strip()
             except Exception as e:
                 print(f"Error parsing LLM emotion: {e}")
         
@@ -318,6 +323,7 @@ def analyze():
             "music": recommendations.get("music"),
             "movie": recommendations.get("movie"),
             "game": recommendations.get("game"),
+            "documentary": recommendations.get("documentary"),
             # New conversational fields
             "conversational_response": ai_response,
             "follow_up_suggestions": empathetic_response.get("follow_up_suggestions", []),
@@ -355,8 +361,13 @@ def transcribe():
         if file.filename == "":
             return jsonify({"error": "No selected file"}), 400
             
-        # Save temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp:
+        # Save temp file with the actual file extension
+        import os
+        ext = os.path.splitext(file.filename)[1]
+        if not ext:
+            ext = ".webm" # default to webm if missing
+            
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp:
             file.save(temp.name)
             temp_path = temp.name
             

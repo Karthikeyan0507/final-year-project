@@ -282,7 +282,24 @@ def _call_gemini(api_key, user_text, history, system_prompt):
 def transcribe_audio(audio_file_path):
     """
     Transcribe audio file using Groq's Whisper API, with a local fallback.
+    Automatically detects audio format (WebM, WAV, OGG, etc.) from file extension
+    so the correct MIME type is sent to Groq — fixing the silent failure caused
+    by sending WebM bytes labelled as audio/wav.
     """
+    # --- Detect real audio format from file extension ---
+    ext = os.path.splitext(audio_file_path)[1].lower()
+    MIME_MAP = {
+        ".webm": "audio/webm",
+        ".wav":  "audio/wav",
+        ".ogg":  "audio/ogg",
+        ".mp3":  "audio/mpeg",
+        ".mp4":  "audio/mp4",
+        ".m4a":  "audio/mp4",
+        ".flac": "audio/flac",
+    }
+    mime_type = MIME_MAP.get(ext, "audio/webm")  # Default to webm (browser recordings)
+    print(f"[Transcribe] File: {os.path.basename(audio_file_path)} | MIME: {mime_type}")
+
     try:
         groq_api_key = os.environ.get("GROQ_API_KEY")
         if groq_api_key:
@@ -293,31 +310,48 @@ def transcribe_audio(audio_file_path):
             
             with open(audio_file_path, "rb") as file:
                 files = {
-                    "file": (os.path.basename(audio_file_path), file, "audio/wav"),
+                    "file": (os.path.basename(audio_file_path), file, mime_type),
                     "model": (None, "whisper-large-v3-turbo"),
                     "language": (None, "en"),
                     "prompt": (None, "The following is a spoken message in English.")
                 }
-                response = requests.post(url, headers=headers, files=files)
+                response = requests.post(url, headers=headers, files=files, timeout=30)
                 
             if response.status_code == 200:
-                print("Successfully transcribed via Groq Whisper (English-only).")
-                return response.json().get("text")
+                text = response.json().get("text", "").strip()
+                print(f"[Transcribe] Groq Whisper SUCCESS: '{text}'")
+                return text if text else None
             else:
-                print(f"Groq Transcription Error: {response.text}")
+                print(f"[Transcribe] Groq API Error {response.status_code}: {response.text}")
+        else:
+            print("[Transcribe] No GROQ_API_KEY found — skipping Groq.")
 
-        # Fallback to local SpeechRecognition if Groq fails or no key
-        print("Attempting local SpeechRecognition fallback...")
+        # --- Convert to WAV first for local SpeechRecognition fallback ---
+        print("[Transcribe] Attempting pydub WAV conversion for local fallback...")
+        wav_path = audio_file_path
+        if ext != ".wav":
+            try:
+                from pydub import AudioSegment
+                audio_seg = AudioSegment.from_file(audio_file_path)
+                wav_path  = audio_file_path.replace(ext, "_converted.wav")
+                audio_seg.export(wav_path, format="wav")
+                print(f"[Transcribe] Converted to WAV: {wav_path}")
+            except Exception as conv_err:
+                print(f"[Transcribe] pydub conversion failed: {conv_err}")
+                return None
+
+        # Fallback to local SpeechRecognition
+        print("[Transcribe] Attempting local SpeechRecognition fallback...")
         import speech_recognition as sr
         recognizer = sr.Recognizer()
         
-        with sr.AudioFile(audio_file_path) as source:
+        with sr.AudioFile(wav_path) as source:
             audio_data = recognizer.record(source)
             text = recognizer.recognize_google(audio_data, language="en-US")
-            print("Successfully transcribed via Local/Google Fallback API (English-only).")
+            print(f"[Transcribe] Local/Google Fallback SUCCESS: '{text}'")
             return text
 
     except Exception as e:
-        print(f"Transcription Error (All engines failed): {e}")
+        print(f"[Transcribe] ALL engines failed: {e}")
         traceback.print_exc()
         return None

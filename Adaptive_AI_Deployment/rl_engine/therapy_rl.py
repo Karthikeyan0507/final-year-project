@@ -166,21 +166,31 @@ MOVIE_OPTIONS = [
 ]
 
 GAME_OPTIONS = [
-    "Journey (Meditative Exploration)",
-    "Abzu (Underwater Relaxation)",
-    "Gris (Emotional Healing)",
-    "Animal Crossing (Cozy Socializing)",
-    "Minecraft (Creative Zen)",
-    "Stardew Valley (Farming Sim)",
-    "Tetris Effect (Flow State)",
-    "Sky: Children of the Light (Social Adventure)",
-    "Super Mario Odyssey (Joyful Adventure)",
-    "Just Dance (Physical Fun)",
-    "The Sims 4 (Life Simulation/Control)",
-    "Portal 2 (Humor/Puzzle Solving)",
-    "The Legend of Zelda: Breath of the Wild (Open World Exploration)",
-    "Slime Rancher (Cute/Colorful Farming)",
-    "Unpacking (Zen Organization)"
+    "Subway Surfers (Play on Poki: https://poki.com/en/g/subway-surfers)",
+    "Temple Run 2 (Play on Poki: https://poki.com/en/g/temple-run-2)",
+    "Crossy Road (Play on Poki: https://poki.com/en/g/crossy-road)",
+    "Stickman Hook (Play on Poki: https://poki.com/en/g/stickman-hook)",
+    "Brain Test: Tricky Puzzles (Play on Poki: https://poki.com/en/g/brain-test-tricky-puzzles)",
+    "Moto X3M (Play on Poki: https://poki.com/en/g/moto-x3m)",
+    "Monkey Mart (Play on Poki: https://poki.com/en/g/monkey-mart)",
+    "Bubble Shooter (Play on Poki: https://poki.com/en/g/bubble-shooter)",
+    "2048 (Play on Poki: https://poki.com/en/g/2048)",
+    "Tunnel Rush (Play on Poki: https://poki.com/en/g/tunnel-rush)",
+    "Minecraft Classic (Play on Poki: https://poki.com/en/g/minecraft-classic)",
+    "Jetpack Joyride (Play on Poki: https://poki.com/en/g/jetpack-joyride)"
+]
+
+DOCUMENTARY_OPTIONS = [
+    "Our Planet - High Seas (https://www.youtube.com/watch?v=9FqwhW0Bstc)",
+    "Our Planet - Forests (https://www.youtube.com/watch?v=JkaxUblCGz0)",
+    "Our Planet - Frozen Worlds (https://www.youtube.com/watch?v=cTQ3Ko9ZKg8)",
+    "Life on Our Planet (Netflix / Trailer: https://www.youtube.com/watch?v=Xsh_70Mls0o)",
+    "Fantastic Fungi (Trailer: https://www.youtube.com/watch?v=vd76K5rRECI)",
+    "Samsara (Visual Meditative Journey)",
+    "Apollo 11 (Historical Achievement)",
+    "My Octopus Teacher (Documentary)",
+    "The Social Dilemma (Documentary)",
+    "13th (Educational Documentary)"
 ]
 
 # --- INITIALIZE RL ENGINES ---
@@ -188,79 +198,112 @@ GAME_OPTIONS = [
 music_engine = QLearningEngine(MUSIC_OPTIONS)
 movie_engine = QLearningEngine(MOVIE_OPTIONS)
 game_engine = QLearningEngine(GAME_OPTIONS)
+documentary_engine = QLearningEngine(DOCUMENTARY_OPTIONS)
 
 
-def choose_therapy(emotion, face_features=None):
-    """
-    Enhanced recommendation engine with Reinforcement Learning.
-    Returns a dictionary with therapy, meditation, and activity suggestions.
-    """
-    emotion = emotion.lower()
+import joblib
+import os
+import numpy as np
 
-    # --- GEOMETRIC FEATURE OVERRIDES ---
-    if face_features:
-        # Check for Drowsiness (Low EAR)
-        ear = face_features.get("ear", 0.5)
-        if ear < 0.22:
-            return {
-                "therapy": "Sleep Hygiene Education",
-                "meditation": "NSDR (Non-Sleep Deep Rest)",
-                "activity": "Power Nap (20 mins)",
-                "music": music_engine.choose_action(emotion),
-                "movie": movie_engine.choose_action(emotion),
-                "game": game_engine.choose_action(emotion)
-            }
-        
-        # Check for High Stress (High Brow Furrow / Low Ratio)
-        brow_ratio = face_features.get("brow_ratio", 1.0)
-        if brow_ratio < 0.55:
-            # We enforce therapy but randomize entertainment
-            therapy = "Stress Management Coaching"
-            meditation = "Progressive Muscle Relaxation (PMR)"
-            activity = "Gentle Neck & Shoulder Stretches"
-            if emotion not in ["happy", "surprise"]:
-                 return {
-                    "therapy": therapy,
-                    "meditation": meditation,
-                    "activity": activity,
-                    "music": music_engine.choose_action(emotion),
-                    "movie": movie_engine.choose_action(emotion),
-                    "game": game_engine.choose_action(emotion)
-                 }
+# Load our newly trained unified ML therapy recommender
+try:
+    _MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "therapy_recommendation_model.pkl")
+    THERAPY_ML_BUNDLE = joblib.load(_MODEL_PATH)
+except Exception as e:
+    print(f"[Warning] Therapy ML model not found, will fallback. {e}")
+    THERAPY_ML_BUNDLE = None
 
-    # --- STANDARD LOGIC ---
-    # Therapy/Meditation/Activity - Keep random for variety (or could add RL here too)
+def get_distress_score(t, v, f, face_features):
+    """Calculate distress score based on all 3 modalities + facial EAR/Brow ratio"""
+    score = 0.0
+    emotions = [t, v, f]
+    if "Trauma" in emotions: score += 0.8
+    if "Sad" in emotions: score += 0.4
+    if "Nervous" in emotions or "Fear" in emotions: score += 0.5
+    if "Angry" in emotions: score += 0.5
     
-    if "crisis" in emotion or "worthless" in emotion:
-        therapy = random.choice([
-            "Crisis Intervention & Stabilization", "Immediate Professional Support", "Grounding Techniques for Severe Distress"
-        ])
-        activity = random.choice([
-            "Call a supportive friend or family member", "Hold an ice cube (Sensory Grounding)", "Contact a local helpline"
-        ])
-    elif "lonely" in emotion or "isolated" in emotion:
-        therapy = random.choice([
-            "Social Connection Therapy", "Community Building Exercises", "Relationship Skills Training"
-        ])
-        activity = random.choice([
-            "Reach out to an old friend", "Join an online community", "Visit a local coffee shop"
-        ])
-    elif "happy" in emotion or "positive" in emotion:
-        therapy = "Positive Psychology Reinforcement"
-        activity = "Share your joy with a friend"
-    else:
-        therapy = random.choice(CBT_OPTIONS)
-        activity = random.choice(ACTIVITY_OPTIONS)
+    # Add facial biometric stress
+    if face_features:
+        if face_features.get("ear", 0.5) < 0.22: score += 0.2 # Extreme fatigue/sadness
+        if face_features.get("brow_ratio", 1.0) < 0.6: score += 0.3 # Severe stress/anger furrow
+        
+    return min(1.0, score)
 
-    # Use RL Engines for Entertainment
-    # The engines will start random (exploration) and become smarter (exploitation)
+def choose_therapy(text_emotion="Neutral", voice_emotion="Neutral", face_emotion="Neutral", face_features=None):
+    """
+    Enhanced recommendation engine.
+    Fuses Voice, Text, Face, and Biometrics through a trained ML model for therapy paths,
+    and uses Reinforcement Learning engines for interactive entertainment (Music, Movie, Game).
+    """
+    text_emotion = text_emotion.capitalize()
+    voice_emotion = voice_emotion.capitalize()
+    face_emotion = face_emotion.capitalize()
+    fallbacks = ["Neutral", "Happy", "Sad", "Angry", "Fear", "Surprise", "Disgust", "Trauma", "Nervous", "Calm"]
+    
+    # Safe capitalization check
+    if text_emotion not in fallbacks: text_emotion = "Neutral"
+    if voice_emotion not in fallbacks: voice_emotion = "Neutral"
+    if face_emotion not in fallbacks: face_emotion = "Neutral"
+
+    # ML Therapy Prediction
+    therapy = None
+    if THERAPY_ML_BUNDLE:
+        try:
+            model = THERAPY_ML_BUNDLE["model"]
+            enc_t = THERAPY_ML_BUNDLE["encoders"]["text"]
+            enc_v = THERAPY_ML_BUNDLE["encoders"]["voice"]
+            enc_f = THERAPY_ML_BUNDLE["encoders"]["face"]
+            
+            t_val = enc_t.transform([text_emotion])[0]
+            v_val = enc_v.transform([voice_emotion])[0]
+            f_val = enc_f.transform([face_emotion])[0]
+            distress = get_distress_score(text_emotion, voice_emotion, face_emotion, face_features)
+            
+            x_input = np.array([[t_val, v_val, f_val, distress]])
+            therapy = model.predict(x_input)[0]
+        except Exception as e:
+            print(f"[RL Engine] ML Therapy Prediction failed: {e}")
+            
+    # Fallback to standard logic if ML fails or isn't built
+    if not therapy:
+        print("[RL Engine] Using classic deterministic fallback")
+        if "Trauma" in [text_emotion, voice_emotion, face_emotion]:
+            therapy = "Crisis Intervention & Stabilization"
+        elif "Sad" in [text_emotion, voice_emotion, face_emotion]:
+            therapy = random.choice(["Social Connection Therapy", "Cognitive Behavioral Therapy (CBT) Techniques"])
+        else:
+            therapy = random.choice(CBT_OPTIONS)
+
+    # Resolve primary emotion for the RL entertainment engines
+    # Give priority to Face > Voice > Text for the entertainment mood
+    primary_emotion = face_emotion if face_emotion != "Neutral" else (voice_emotion if voice_emotion != "Neutral" else text_emotion)
+    primary_emotion = primary_emotion.lower()
+
+    # Determine activity and meditation based on the therapy output
+    if "Crisis" in therapy:
+        activity = "Call a supportive friend or family member"
+        meditation = "NSDR (Non-Sleep Deep Rest)"
+    elif "Social" in therapy:
+        activity = "Reach out to an old friend or visit a local coffee shop"
+        meditation = "Loving-Kindness (Metta) Meditation"
+    elif "Stress" in therapy:
+        activity = "Cold Shower for Reset or Gentle Stretches"
+        meditation = "Advanced Box Breathing: Inhale 4s, Hold 4s, Exhale 4s, Hold 4s"
+    elif "Positive" in therapy:
+        activity = "Share your joy with a friend or creative art"
+        meditation = "Body Scan Meditation: Deeply tuning into physical sensations"
+    else:
+        activity = random.choice(ACTIVITY_OPTIONS)
+        meditation = random.choice(MEDITATION_OPTIONS)
+
     recommendations = {
         "therapy": therapy,
-        "meditation": random.choice(MEDITATION_OPTIONS),
+        "meditation": meditation,
         "activity": activity,
-        "music": music_engine.choose_action(emotion),
-        "movie": movie_engine.choose_action(emotion),
-        "game": game_engine.choose_action(emotion)
+        "music": music_engine.choose_action(primary_emotion),
+        "movie": movie_engine.choose_action(primary_emotion),
+        "game": game_engine.choose_action(primary_emotion),
+        "documentary": documentary_engine.choose_action(primary_emotion)
     }
 
     return recommendations
@@ -278,6 +321,9 @@ def update_recommendation_model(emotion, action, reward):
     elif action in GAME_OPTIONS:
         game_engine.update(emotion, action, reward)
         return "game"
+    elif action in DOCUMENTARY_OPTIONS:
+        documentary_engine.update(emotion, action, reward)
+        return "documentary"
     else:
         print(f"[RL] Action '{action}' not found in known lists. Skipping update.")
         return None

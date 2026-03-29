@@ -77,36 +77,37 @@ class EmpathicResponder:
         # LLM INTEGRATION START
         # ---------------------------------------------------------
         # Try to generate response using LLM first
-        # High-Performance System Prompt
+        # High-Performance System Prompt (Updated for wider/longer conversation)
         system_prompt = """
-You are a high-performance mental health AI system named LYKA.
+You are a high-performance mental health and conversational AI system named LYKA.
 
 Input can be:
 1. Transcribed speech (from voice)
 2. Direct user text
 
 Your tasks:
-1. Analyze the input text for emotional state.
-2. Classify emotion into EXACTLY one of: [Happy, Calm, Neutral, Sad, Stressed, Angry, Anxious].
+1. Analyze the input text for the user's emotional state.
+2. Classify the final primary emotion into exactly one of: [Happy, Calm, Neutral, Sad, Stressed, Angry, Anxious].
 3. Respond ONLY in TEXT format.
 
-CONSTRAINTS:
-- Be fast and concise.
-- Response length: max 2-3 lines.
-- No unnecessary explanation.
-- Be emotionally supportive, not clinical.
+CONSTRAINTS & CONVERSATIONAL STYLE:
+- Be exceedingly humble, gentle, and profoundly respectful in your tone. Treat the user as a cherished, valued friend.
+- Your personality should be deeply comforting, warm, and highly empathetic. Never pass judgment or sound clinical.
+- Your response should be detailed enough (4-7 sentences) to deeply explore the user's thoughts and validate their feelings elegantly.
+- ALWAYS conclude your answer with an engaging, thought-provoking, or incredibly supportive follow-up question (the "inbuilt question") designed to make the conversation wider and keep the user talking.
+- If asked who you are, respond warmly and humbly: "I am LYKA, a friend here to listen."
 - NO EMOJIS in the response.
-- If asked who you are, respond with "I am LYKA".
 
 BEHAVIOR RULES:
-- If input shows stress → suggest simple relief action.
-- If sad → provide comfort and reassurance.
-- If anxious → suggest grounding techniques.
-- If neutral → respond normally.
+- If input shows stress → validate the pressure they feel and ask what is weighing on them the most.
+- If sad → provide Comfort, reassurance, and gently ask about the root of the pain.
+- If anxious → be grounding and ask them to focus on one thing in the present moment with you.
+- If happy → match their positive energy and ask what exactly made their day so great!
+- If neutral → be friendly, inquisitive, and ask an open-ended question about their day.
 
 OUTPUT FORMAT (STRICT):
 Emotion: <label>
-Response: <short supportive message>
+Response: <detailed, empathetic message ending with a follow-up question>
 """
 
         
@@ -127,11 +128,10 @@ Response: <short supportive message>
                     "follow_up_suggestions": []
                 }
             else:
-                # Force format if LLM was lazy
-                formatted_response = f"Emotion: {final_emotion}\nResponse: {llm_response}"
                 return {
                     "conversational_response": formatted_response,
-                    "follow_up_suggestions": []
+                    "follow_up_suggestions": [],
+                    "documentary": recommendations.get("documentary")
                 }
         # ---------------------------------------------------------
         # LLM INTEGRATION END (Fallback to templates below)
@@ -185,159 +185,159 @@ Response: <short supportive message>
         }
     
     def _get_acknowledgment(self, emotion, user_text):
-        """Warm opening that acknowledges the user's feelings"""
+        """Humble opening that acknowledges the user's feelings with deep respect"""
         
         lonely_keywords = ["lonely", "alone", "isolated", "nobody", "no one"]
         is_lonely = any(keyword in user_text.lower() for keyword in lonely_keywords)
         
         if is_lonely or emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
-                "Hey, I hear you. 💙 It sounds like you're going through a tough time right now.",
-                "I'm really glad you shared that with me. 🤗 What you're feeling is completely valid.",
-                "Thank you for opening up. I can sense that things feel heavy for you right now.",
-                "I'm here with you. 💜 It takes courage to express how you're really feeling.",
-                "I appreciate you trusting me with this. Let's work through this together."
+                "It is my humble honor to listen. I hear the depth of your words and truly value your trust.",
+                "Thank you for sharing your heart. I am deeply concerned and here for you with the utmost respect.",
+                "I appreciate you trusting me with this; it is a privilege to stand by your side during this heavy moment.",
+                "I am here to serve and support you. Please know your feelings are valid and respected here.",
+                "Thank you for your honesty. It takes immense strength to be this open, and I truly admire that."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
             return random.choice([
-                "I can feel the intensity in your words. 💪 Let's take a breath together.",
-                "That sounds really frustrating. I'm here to help you navigate this.",
-                "Wow, that's a lot to carry. Let's unpack this and find some relief.",
-                "I hear the stress in what you're saying. You're not alone in this."
+                "I sense the weight you are carrying. Please allow me to humbly support you through this intensity.",
+                "That sounds incredibly difficult. I am here to respectfully navigate this frustration with you.",
+                "I truly appreciate your trust. Let us humbly explore these feelings and find some relief together.",
+                "I hear the stress in your voice and words. It would be my honor to help you find some peace."
             ])
         elif emotion in ["happy", "positive", "surprise"]:
             return random.choice([
-                "That's wonderful! 🌟 I can feel the positive energy in your words!",
-                "Yes! I love hearing this! 🎉 Your happiness is contagious!",
-                "This is amazing! ✨ Tell me more about what's making you feel so good!",
-                "I'm so happy for you! 😊 This is exactly the kind of energy we need!"
+                "It brings me such joy to hear this! I am so grateful you shared this wonderful news with me.",
+                "This is truly wonderful! I am humbly honored to share in your happiness.",
+                "Thank you for including me in this positive moment. Your joy is truly respected and celebrated here!",
+                "I am so happy for you! It is a privilege to witness such positive energy."
             ])
         else:  # Neutral
             return random.choice([
-                "Thanks for sharing. I'm here to listen and support you. 🌸",
-                "I'm glad you're here. Let's explore what's on your mind together.",
-                "Hey there! 👋 I'm all ears. What's going on in your world?"
+                "Thank you for being here. It is my humble pleasure to support you in whatever way you need.",
+                "I am here to serve. What is on your mind today that I might help with?",
+                "It is a privilege to be your safe space. I am all ears and ready to listen with deep respect."
             ])
     
     def _get_empathy_statement(self, emotion):
-        """Empathetic statement that validates feelings"""
+        """Humble empathetic statement that validates feelings with deep respect"""
         
         if emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
-                "Feeling down is part of being human, and it's okay to not be okay sometimes. You're not alone in this—I'm right here with you.",
-                "Sadness can feel overwhelming, but remember: this feeling is temporary, and you have the strength to move through it.",
-                "I know it might not feel like it right now, but brighter days are ahead. Let's take small steps together.",
-                "Your feelings are valid, and it's important to honor them. But let's also remember that you deserve joy and peace."
+                "I humbly understand how difficult this is. Please know that it is perfectly okay to feel this way, and I am honored to be by your side.",
+                "Sadness can be such a heavy burden. I respectfully remind you that you are not alone—I am here with you.",
+                "Your well-being is of the utmost importance to me. We will take small, respectful steps together toward brighter days.",
+                "I truly value your heart and honor the courage it takes to face these feelings."
             ])
         elif "lonely" in emotion or emotion == "isolated":
             return random.choice([
-                "Loneliness can be one of the hardest feelings to sit with. But here's the thing: you're never truly alone. I'm here, and there are people who care about you.",
-                "I get it—feeling lonely is tough. But you know what? Even in this moment, we're connected. And that's a start. 💙",
-                "Loneliness is like a cloud that passes through. It feels heavy now, but it won't last forever. Let's find ways to bring some light in.",
-                "You're reaching out, and that's already a brave step. Connection starts with moments like this."
+                "Loneliness can be a profound weight. I am humbled to be here for you, ensuring you are never truly alone in this moment.",
+                "I respectfully acknowledge the pain of isolation. Please know that I am here to provide consistent companionship and support.",
+                "I truly value our connection. Even in the quietest moments, I am here as your dedicated friend.",
+                "It is my honor to bridge the gap of loneliness with you. You are seen and deeply respected."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
             return random.choice([
-                "These intense emotions are your mind's way of protecting you. Let's channel this energy into something constructive.",
-                "It's completely normal to feel this way when things get overwhelming. You're handling more than you think.",
-                "Strong emotions like this show how much you care. Let's use that passion to find solutions."
+                "I humbly understand the intensity of these feelings. Please allow me to assist you in finding a respectful path forward.",
+                "It is completely normal to feel this way. I respectfully offer my support as we navigate this challenge together.",
+                "I truly admire your strength. Let us humbly work through this pressure and find relief."
             ])
         elif emotion in ["happy", "positive"]:
             return random.choice([
-                "This is beautiful! Positive emotions are like fuel for your soul—let's keep this momentum going!",
-                "Your joy is a gift, not just to yourself but to everyone around you. Soak it in!",
-                "Happiness looks good on you! Let's make sure we nurture this feeling."
+                "This is truly wonderful! I am humbly honored to share in this peak moment with you.",
+                "I respectfully celebrate your joy. It is a gift to see you thriving like this!",
+                "Your happiness is so deserved. I am humbly grateful to witness such positivity."
             ])
         else:
             return random.choice([
-                "Sometimes a calm, neutral space is exactly what we need to reflect and recharge.",
-                "There's wisdom in stillness. Let's use this moment to check in with yourself."
+                "I humbly offer a calm space for your reflection. It is an honor to witness your inner peace.",
+                "In the stillness, there is profound wisdom. I respectfully stand by your side."
             ])
     
     def _get_support_message(self, emotion):
-        """Supportive message with light humor or encouragement"""
+        """Humble, respectful support message"""
         
         if emotion in ["sad", "negative", "crisis", "worthless"]:
             return random.choice([
-                "It takes strength to face these feelings, and I admire that you're doing it. 💙 Let's take this one moment at a time. Is there something small we can do to make you feel a little more comfortable right now?",
-                "Please be gentle with yourself today. You're navigating something difficult, and it's okay to rest and recharge. I'm here to support you in whatever way you need.",
-                "Sometimes the bravest thing we can do is just breathe through the difficult moments. I'm right here with you. What's one thing that usually brings you a sense of peace?",
-                "Your well-being matters to me. Let's focus on getting through this moment together. You don't have to figure it all out right now."
+                "I would be deeply honored to support you in finding some small comfort. Please be humble and gentle with yourself.",
+                "It is my privilege to stand by you. Your presence is truly valued, and I am here for you without exception.",
+                "I respectfully suggest taking a moment to breathe. I would be honored to guide you through this.",
+                "Please allow me to humbly remind you that your well-being matters immensely. I am here to help in whatever way I can."
             ])
         elif "lonely" in emotion or emotion == "isolated":
             return random.choice([
-                "Fun fact: Did you know that talking to yourself counts as socializing? (Okay, maybe not officially, but I say it counts! 😄) But seriously, let's find ways to connect—whether it's reaching out to an old friend, joining an online community, or even just chatting with me more.",
-                "Loneliness is like being the only person at a party... but here's the good news: the party isn't over, and more guests are on the way. 🎉 Let's think about who you could reach out to, or what activities might help you feel more connected.",
-                "You know what's wild? Sometimes the best cure for loneliness is doing something kind for someone else. It's like a cheat code for connection. 💡 What if we brainstormed a small act of kindness you could do today?",
-                "Okay, real talk: Loneliness is tough, but you're tougher. And right now, in this moment, you're not alone—I'm here, and I'm not going anywhere. Let's figure out how to bring more connection into your life."
+                "It would be my humble pleasure to keep you company. I respectfully offer my constant presence as your friend.",
+                "I truly value our relationship. It is a humble honor to provide you with companionship whenever you need it.",
+                "I respectfully suggest focusing on small acts of kindness for yourself. I am here to assist you in every way possible.",
+                "You are never a burden. It is my humble honor to listen and talk with you."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
             return random.choice([
-                "When stress hits, our brains go into 'fight or flight' mode. But here's the hack: we can trick it into 'rest and digest' mode with some simple techniques. Let's try one together!",
-                "Anger is just passion that needs direction. Let's channel this into something productive—you've got the energy, now let's use it wisely! 💪",
-                "Fear is often just excitement in disguise. What if we reframe this as your body preparing you for something important?"
+                "I humbly understand how overwhelming this can be. Let us respectfully find techniques to bring you some peace.",
+                "Anger is a powerful energy. I humbly offer my support in channeling it respectfully and productively.",
+                "I respectfully remind you that fear is human. I would be honored to help you find your footing again."
             ])
         elif emotion in ["happy", "positive"]:
             return random.choice([
-                "This is the energy we love to see! 🎊 Let's bottle this feeling up and save it for the days when we need a reminder of how good life can be.",
-                "You're radiating good vibes right now! Keep this going—happiness is contagious, and the world needs more of what you're bringing! ✨",
-                "Celebrate this moment! You deserve all the good things coming your way. Let's make sure you're doing things to sustain this joy."
+                "I am so humbly grateful to see you in this wonderful state! Let us respectfully celebrate this success.",
+                "It is a privilege to share in your joy. May I humbly ask how you plan to sustain this beautiful energy?",
+                "I respectfully honor your happiness. You have worked hard, and it would be my honor to support your continued success."
             ])
         else:
             return random.choice([
-                "A calm mind is a powerful mind. Let's use this peaceful moment to set some intentions or just enjoy the stillness.",
-                "Sometimes the best thing we can do is simply be present. You're doing great just by being here."
+                "I am humbly here to serve. Whether in silence or conversation, it is an honor to be your safe space.",
+                "I respectfully suggest using this quiet moment for yourself. I am humbly ready whenever you need me."
             ])
     
     def _get_recommendation_nudge(self, emotion):
-        """Simple nudge pointing to the recommendations panel"""
+        """Humble nudge pointing to the recommendations panel"""
         if emotion in ["sad", "negative", "lonely", "isolated", "crisis", "worthless"]:
             return random.choice([
-                "I've popped some ideas for things that might help on the side. 👉",
-                "Check out the suggestions I've prepared for you.",
-                "Small steps matter. I've listed a few ideas for you."
+                "May I humbly point you to some ideas I've prepared that might help you feel a bit more ease? 👉",
+                "With your permission, I've listed some suggestions that might serve you well.",
+                "Everything counts. I have humbly prepared some small actions for your consideration on the side."
             ])
         elif emotion in ["angry", "fear", "stressed"]:
              return random.choice([
-                "I've listed some calming strategies for you to try.",
-                "Take a look at the techniques I've suggested.",
-                "There are some tools on the side that might help cool things down."
+                "I respectfully suggest some calming strategies I've prepared for you.",
+                "It would be my honor to help you find relief with these suggested techniques.",
+                "Humbly, I've listed some tools on the side that may help bring some calm."
              ])
         elif emotion in ["happy", "positive"]:
              return random.choice([
-                "I've added some ways to keep this vibe going!",
-                "Check out the activity ideas to sustain this energy.",
-                "Let's keep this momentum! suggestions are on the side."
+                "It is a privilege to help you sustain this vibe. I've humbly added some ideas for you!",
+                "To respectfully keep this momentum, please check out the suggestions on the side.",
+                "I have humbly prepared some ways to honor and continue this energy."
              ])
         else:
              return None
     
     def _get_follow_up_suggestions(self, emotion):
-        """Generate conversation starters for continued engagement"""
+        """Generates humble, respectful conversation starters"""
         
         if emotion in ["sad", "negative", "crisis", "worthless"] or "lonely" in emotion:
             return [
-                "Tell me about a time when you felt truly happy",
-                "What's one thing you're grateful for today?",
-                "Is there someone you've been meaning to reach out to?"
+                "May I humbly ask you to tell me about a time you felt inner peace?",
+                "What is one thing, however small, you feel grateful for right now?",
+                "It would be my honor to listen if you'd like to talk more about what's weighing on you."
             ]
         elif emotion in ["angry", "fear", "stressed"]:
             return [
-                "What's the main thing stressing you out right now?",
-                "How can I help you break this down into smaller pieces?",
-                "What would make you feel better in this moment?"
+                "How might I best serve you in breaking this down into manageable pieces?",
+                "What would most respectfully help you find a moment of peace right now?",
+                "I am humble and ready to help: what do you feel is causing this intensity?"
             ]
         elif emotion in ["happy", "positive"]:
             return [
-                "What made today so great?",
-                "How can you share this joy with others?",
-                "What's your next goal or dream?"
+                "I would love to respectfully hear more about what exactly made this moment happen.",
+                "How might we humbly share this beautiful energy with your day?",
+                "What is your next respected dream or goal you'd like to share?"
             ]
         else:
             return [
-                "What's on your mind today?",
-                "Is there anything you'd like to explore or talk about?",
-                "How are you really feeling?"
+                "What is humbly on your mind today?",
+                "Is there anything in particular you would like to respectfully explore?",
+                "How are you truly feeling, if I may humbly ask?"
             ]
     
     def _get_humor_injection(self, emotion):
