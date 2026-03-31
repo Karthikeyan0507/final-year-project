@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mental-health-ai
+    env: python
+    plan: free
+    # Install dependencies from root requirements.txt
+    buildCommand: "pip install -r requirements.txt"
+    # Port 7860 is where the Streamlit UI runs
+    startCommand: "chmod +x start.sh && ./start.sh"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: PORT
+        value: 7860
+      - key: FLASK_ENV
+        value: production

@@ -416,5 +416,6 @@ def tts_endpoint():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # LOCAL RUN ONLY
-    app.run(debug=True, use_reloader=False)
+    # LOCAL & CLOUD RUN
+    # Binding to 0.0.0.0 ensures it is accessible inside the Docker network/container
+    app.run(host="0.0.0.0", port=5000, debug=False)
