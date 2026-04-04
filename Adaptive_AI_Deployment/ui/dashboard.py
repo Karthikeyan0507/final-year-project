@@ -1387,6 +1387,13 @@ if "emergency_contact" not in st.session_state:
     st.session_state.emergency_contact = None
 if "show_emergency_form" not in st.session_state:
     st.session_state.show_emergency_form = False
+if "audio_ready" not in st.session_state:
+    st.session_state.audio_ready = False
+# Ensure these always exist so first-message reads never KeyError
+if "temp_chat_value" not in st.session_state:
+    st.session_state.temp_chat_value = ""
+if "temp_therapy_value" not in st.session_state:
+    st.session_state.temp_therapy_value = ""
 
 # 0. Render Interface based on Mode
 if interaction_mode == "Wholesome Conversation":
@@ -1530,9 +1537,9 @@ if prompt:
             st.error(f"⚠️ An unexpected error occurred: {str(e)}")
         finally:
             st.session_state.is_processing = False
-            # Ensure we don't carry over the prompt into the next run
-            if "temp_chat_value" in st.session_state:
-                st.session_state.temp_chat_value = ""
+            # Clear pending values BEFORE rerun so they don't persist into next cycle
+            st.session_state.temp_chat_value = ""
+            st.session_state.temp_therapy_value = ""
             st.rerun()
 
 

@@ -22,8 +22,9 @@ try:
     mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles
     HAS_MEDIAPIPE = True
-except (ImportError, AttributeError) as e:
-    print(f"MediaPipe Solutions not available: {e}")
+except Exception as e:
+    # Catches ImportError, AttributeError, RuntimeError (mediapipe protobuf parse failures), etc.
+    print(f"MediaPipe not available, facial mesh disabled: {e}")
     HAS_MEDIAPIPE = False
 
 

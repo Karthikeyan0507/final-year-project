@@ -188,10 +188,10 @@ def _call_openai(api_key, user_text, history, system_prompt):
         messages.append({"role": "user", "content": user_text})
         
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo", # or "gpt-4o" if available/preferred
+            model="gpt-3.5-turbo",
             messages=messages,
             temperature=0.7,
-            max_tokens=300
+            max_tokens=600  # Increased from 300 to handle longer inputs
         )
         
         return response.choices[0].message.content
@@ -224,10 +224,10 @@ def _call_groq(api_key, user_text, history, system_prompt):
             "model": "llama-3.1-8b-instant",
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 300
+            "max_tokens": 600  # Increased from 300 — 300 tokens cut off mid-reply on longer inputs
         }
         
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=30)  # Increased from 10s
         
         if response.status_code == 200:
             return response.json()["choices"][0]["message"]["content"]

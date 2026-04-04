@@ -1,0 +1,83 @@
+2026-03-19 11:55:33.670716: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\google\api_core\_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.8) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+WARNING:tensorflow:From D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+Successfully loaded the trained Text Emotion ML model.
+MediaPipe Solutions not available: module 'mediapipe' has no attribute 'solutions'
+Landmark classifier loaded successfully.
+ * Serving Flask app 'app'
+ * Debug mode: on
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 14:52:25] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 14:52:26] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 14:55:29] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 14:55:29] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:13:40] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:13:41] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:21:53] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:21:56] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:26:17] "POST /transcribe HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:26:19] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:26:21] "POST /tts HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\speech_recognition\__init__.py", line 235, in __enter__
+    self.audio_reader = wave.open(self.filename_or_fileobject, "rb")
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\wave.py", line 509, in open
+    return Wave_read(f)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\wave.py", line 163, in __init__
+    self.initfp(f)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\wave.py", line 128, in initfp
+    self._file = Chunk(file, bigendian = 0)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\chunk.py", line 63, in __init__
+    raise EOFError
+EOFError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\speech_recognition\__init__.py", line 240, in __enter__
+    self.audio_reader = aifc.open(self.filename_or_fileobject, "rb")
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 917, in open
+    return Aifc_read(f)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 352, in __init__
+    self.initfp(file_object)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 314, in initfp
+    chunk = Chunk(file)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\chunk.py", line 63, in __init__
+    raise EOFError
+EOFError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\speech_recognition\__init__.py", line 266, in __enter__
+    self.audio_reader = aifc.open(aiff_file, "rb")
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 917, in open
+    return Aifc_read(f)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 358, in __init__
+    self.initfp(f)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\aifc.py", line 314, in initfp
+    chunk = Chunk(file)
+  File "C:\Users\- MD -\AppData\Local\Programs\Python\Python310\lib\chunk.py", line 63, in __init__
+    raise EOFError
+EOFError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Adaptive_AI\Adaptive_AI_Deployment\backend\llm_service.py", line 312, in transcribe_audio
+    with sr.AudioFile(audio_file_path) as source:
+  File "D:\Adaptive_AI\Adaptive_AI_Deployment\venv\lib\site-packages\speech_recognition\__init__.py", line 268, in __enter__
+    raise ValueError("Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
+ValueError: Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:26:22] "[35m[1mPOST /transcribe HTTP/1.1[0m" 500 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:40:15] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:40:17] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:52:12] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:52:15] "POST /tts HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:57:25] "POST /analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Mar/2026 15:57:28] "POST /tts HTTP/1.1" 200 -

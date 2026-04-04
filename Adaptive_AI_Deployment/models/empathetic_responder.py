@@ -62,11 +62,20 @@ class EmpathicResponder:
                 "follow_up_suggestions": []
             }
 
-        # Custom handling for short inputs (e.g., "hey", "hi")
-        if len(user_text.split()) <= 3 and emotion_lower == "neutral" and not conversation_history:
+        # Custom handling for short pure-greeting inputs (e.g., "hey", "hi")
+        # Only intercept if it's TRULY a greeting — short, neutral, no history, and matches known greetings
+        GREETING_WORDS = {"hi", "hey", "hello", "hiya", "howdy", "sup", "yo", "greetings"}
+        words_lower = [w.strip('.,!?') for w in user_text.lower().split()]
+        is_pure_greeting = (
+            len(words_lower) <= 3
+            and emotion_lower == "neutral"
+            and not conversation_history
+            and any(w in GREETING_WORDS for w in words_lower)
+        )
+        if is_pure_greeting:
              return {
                 "conversational_response": random.choice([
-                    "Hey there! 👋 I'm all ears. What's going on in your world?",
+                    "Hey there! I'm all ears. What's going on in your world?",
                     "Hi! It's good to see you. How are you feeling right now?",
                     "Hello! I'm here for you. What's on your mind?"
                 ]),
@@ -121,18 +130,13 @@ Response: <detailed, empathetic message ending with a follow-up question>
         llm_response = generate_llm_response(user_text, formatted_history, system_prompt)
         
         if llm_response:
-            # Check if LLM followed the format
-            if "Emotion:" in llm_response and "Response:" in llm_response:
-                 return {
-                    "conversational_response": llm_response,
-                    "follow_up_suggestions": []
-                }
-            else:
-                return {
-                    "conversational_response": formatted_response,
-                    "follow_up_suggestions": [],
-                    "documentary": recommendations.get("documentary")
-                }
+            # Always return the LLM response — whether or not it followed the strict format.
+            # The app.py parser will handle stripping Emotion:/Response: labels if present.
+            # Previously this branch crashed with NameError because 'formatted_response' was undefined.
+            return {
+                "conversational_response": llm_response,
+                "follow_up_suggestions": []
+            }
         # ---------------------------------------------------------
         # LLM INTEGRATION END (Fallback to templates below)
         # ---------------------------------------------------------

@@ -17,7 +17,7 @@ COPY backend/requirements.txt ./backend/
 # Install any needed packages specified in requirements.txt
 # Note: Using tensorflow-cpu for smaller image size and compatibility
 RUN pip install --no-cache-dir -r backend/requirements.txt \
-    && pip install --no-cache-dir tensorflow-cpu==2.15.0
+    && pip install --no-cache-dir streamlit opencv-python-headless mediapipe tensorflow-cpu==2.15.0
 
 # Copy the rest of the application code
 COPY . .
