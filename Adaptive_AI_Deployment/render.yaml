@@ -3,6 +3,7 @@ services:
     name: mental-health-ai
     env: python
     plan: free
+    rootDir: Adaptive_AI_Deployment
     # Install dependencies from root requirements.txt
     buildCommand: "pip install -r requirements.txt"
     # Port 7860 is where the Streamlit UI runs
